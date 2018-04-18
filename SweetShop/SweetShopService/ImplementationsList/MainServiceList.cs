@@ -21,14 +21,8 @@ namespace SweetShopService.ImplementationsList
 
         public void CreateRequest(RequestBindingModel model)
         {
-            int maxId = 0;
-            for (int i = 0; i < source.Requests.Count; ++i)
-            {
-                if (source.Requests[i].Id > maxId)
-                {
-                    maxId = source.Customers[i].Id;
-                }
-            }
+            int maxId = source.Requests.Count > 0 ? source.Requests.Max(rec => rec.Id) : 0;
+
             source.Requests.Add(new Request
             {
                 Id = maxId + 1,
@@ -43,188 +37,119 @@ namespace SweetShopService.ImplementationsList
 
         public void FinishRequest(int id)
         {
-            int index = -1;
-            for (int i = 0; i < source.Requests.Count; ++i)
-            {
-                if (source.Customers[i].Id == id)
-                {
-                    index = i;
-                    break;
-                }
-            }
-            if (index == -1)
+            Request element = source.Requests.FirstOrDefault(rec => rec.Id == id);
+            if (element == null)
             {
                 throw new Exception("Заказ не найден");
             }
-            source.Requests[index].Status = RequestStatus.Готов;
+            element.Status = RequestStatus.Готов;
         }
 
         public List<RequestViewModel> GetList()
         {
-            List<RequestViewModel> result = new List<RequestViewModel>();
-            for (int i = 0; i < source.Requests.Count; ++i)
-            {
-                string CustomerFIO = string.Empty;
-                for (int j = 0; j < source.Customers.Count; ++j)
+            List<RequestViewModel> result = source.Requests
+                .Select(rec => new RequestViewModel
                 {
-                    if (source.Customers[j].Id == source.Requests[i].CustomerId)
-                    {
-                        CustomerFIO = source.Customers[j].CustomerFIO;
-                        break;
-                    }
-                }
-                string CakeName = string.Empty;
-                for (int j = 0; j < source.Cakes.Count; ++j)
-                {
-                    if (source.Cakes[j].Id == source.Requests[i].CakeId)
-                    {
-                        CakeName = source.Cakes[j].CakeName;
-                        break;
-                    }
-                }
-                string BakerFIO = string.Empty;
-                if (source.Requests[i].BakerId.HasValue)
-                {
-                    for (int j = 0; j < source.Bakers.Count; ++j)
-                    {
-                        if (source.Bakers[j].Id == source.Requests[i].BakerId.Value)
-                        {
-                            BakerFIO = source.Bakers[j].BakerFIO;
-                            break;
-                        }
-                    }
-                }
-                result.Add(new RequestViewModel
-                {
-                    Id = source.Requests[i].Id,
-                    CustomerId = source.Requests[i].CustomerId,
-                    CustomerFIO = CustomerFIO,
-                    CakeId = source.Requests[i].CakeId,
-                    CakeName = CakeName,
-                    BakerId = source.Requests[i].BakerId,
-                    BakerName = BakerFIO,
-                    Count = source.Requests[i].Count,
-                    Sum = source.Requests[i].Sum,
-                    DateCreate = source.Requests[i].DateCreate.ToLongDateString(),
-                    DateBaking = source.Requests[i].DateBaking?.ToLongDateString(),
-                    Status = source.Requests[i].Status.ToString()
-                });
-            }
+                    Id = rec.Id,
+                    CustomerId = rec.CustomerId,
+                    CakeId = rec.CakeId,
+                    BakerId = rec.BakerId,
+                    DateCreate = rec.DateCreate.ToLongDateString(),
+                    DateBaking = rec.DateBaking?.ToLongDateString(),
+                    Status = rec.Status.ToString(),
+                    Count = rec.Count,
+                    Sum = rec.Sum,
+                    CustomerFIO = source.Customers
+                                     .FirstOrDefault(recC => recC.Id == rec.CustomerId)?.CustomerFIO,
+                    CakeName = source.Cakes
+                                     .FirstOrDefault(recP => recP.Id == rec.CakeId)?.CakeName,
+                    BakerName = source.Bakers
+                                     .FirstOrDefault(recI => recI.Id == rec.BakerId)?.BakerFIO
+                })
+                 .ToList();
             return result;
         }
 
         public void PayRequest(int id)
         {
-            int index = -1;
-            for (int i = 0; i < source.Requests.Count; ++i)
-            {
-                if (source.Customers[i].Id == id)
-                {
-                    index = i;
-                    break;
-                }
-            }
-            if (index == -1)
+            Request element = source.Requests.FirstOrDefault(rec => rec.Id == id);
+            if (element == null)
             {
                 throw new Exception("Заказ не найден");
             }
-            source.Requests[index].Status = RequestStatus.Оплачен;
+            element.Status = RequestStatus.Оплачен;
         }
 
         public void PutIngredientOnFridge(FridgeIngredientBindingModel model)
         {
-            int maxId = 0;
-            for (int i = 0; i < source.FridgeIngredients.Count; ++i)
+            FridgeIngredient element = source.FridgeIngredients
+                                                .FirstOrDefault(rec => rec.FridgeId == model.FridgeId &&
+ rec.IngredientId == model.IngredientId);
+            if (element != null)
             {
-                if (source.FridgeIngredients[i].FridgeId == model.FridgeId &&
-                    source.FridgeIngredients[i].IngredientId == model.IngredientId)
-                {
-                    source.FridgeIngredients[i].Count += model.Count;
-                    return;
-                }
-                if (source.FridgeIngredients[i].Id > maxId)
-                {
-                    maxId = source.FridgeIngredients[i].Id;
-                }
+                element.Count += model.Count;
             }
-            source.FridgeIngredients.Add(new FridgeIngredient
+            else
             {
-                Id = ++maxId,
-                FridgeId = model.FridgeId,
-                IngredientId = model.IngredientId,
-                Count = model.Count
-            });
+                int maxId = source.FridgeIngredients.Count > 0 ? source.FridgeIngredients.Max(rec => rec.Id) : 0;
+                source.FridgeIngredients.Add(new FridgeIngredient
+
+                {
+                    Id = ++maxId,
+                    FridgeId = model.FridgeId,
+                    IngredientId = model.IngredientId,
+                    Count = model.Count
+                });
+            }
         }
 
         public void TakeRequestInWork(RequestBindingModel model)
         {
-            int index = -1;
-            for (int i = 0; i < source.Requests.Count; ++i)
-            {
-                if (source.Requests[i].Id == model.Id)
-                {
-                    index = i;
-                    break;
-                }
-            }
-            if (index == -1)
+            Request element = source.Requests.FirstOrDefault(rec => rec.Id == model.Id);
+            if (element == null)
             {
                 throw new Exception("Заказ не найден");
             }
             // смотрим по количеству компонентов на складах
-            for (int i = 0; i < source.CakeIngredients.Count; ++i)
+            var CakeIngredients = source.CakeIngredients.Where(rec => rec.CakeId == element.CakeId);
+            foreach (var CakeIngredient in CakeIngredients)
             {
-                if (source.CakeIngredients[i].CakeId == source.Requests[index].CakeId)
+                int countOnFridges = source.FridgeIngredients
+                                             .Where(rec => rec.IngredientId == CakeIngredient.IngredientId)
+                                             .Sum(rec => rec.Count);
+                if (countOnFridges < CakeIngredient.Count * element.Count)
                 {
-                    int countOnFridges = 0;
-                    for (int j = 0; j < source.FridgeIngredients.Count; ++j)
-                    {
-                        if (source.FridgeIngredients[j].IngredientId == source.CakeIngredients[i].IngredientId)
-                        {
-                            countOnFridges += source.FridgeIngredients[j].Count;
-                        }
-                    }
-                    if (countOnFridges < source.CakeIngredients[i].Count * source.Requests[index].Count)
-                    {
-                        for (int j = 0; j < source.Ingredients.Count; ++j)
-                        {
-                            if (source.Ingredients[j].Id == source.CakeIngredients[i].IngredientId)
-                            {
-                                throw new Exception("Не достаточно ингредиента " + source.Ingredients[j].IngredientName +
-                                    " требуется " + source.CakeIngredients[i].Count + ", в наличии " + countOnFridges);
-                            }
-                        }
-                    }
+                    var IngredientName = source.Ingredients
+                                     .FirstOrDefault(rec => rec.Id == CakeIngredient.IngredientId);
+                    throw new Exception("Не достаточно компонента " + IngredientName?.IngredientName +
+" требуется " + CakeIngredient.Count + ", в наличии " + countOnFridges);
+
                 }
             }
             // списываем
-            for (int i = 0; i < source.CakeIngredients.Count; ++i)
+            foreach (var CakeIngredient in CakeIngredients)
             {
-                if (source.CakeIngredients[i].CakeId == source.Requests[index].CakeId)
+                int countOnFridges = CakeIngredient.Count * element.Count;
+                var FridgeIngredients = source.FridgeIngredients
+                                            .Where(rec => rec.IngredientId == CakeIngredient.IngredientId);
+                foreach (var FridgeIngredient in FridgeIngredients)
                 {
-                    int countOnFridges = source.CakeIngredients[i].Count * source.Requests[index].Count;
-                    for (int j = 0; j < source.FridgeIngredients.Count; ++j)
+                    // компонентов на одном слкаде может не хватать
+                    if (FridgeIngredient.Count >= countOnFridges)
                     {
-                        if (source.FridgeIngredients[j].IngredientId == source.CakeIngredients[i].IngredientId)
-                        {
-                            // компонентов на одном слкаде может не хватать
-                            if (source.FridgeIngredients[j].Count >= countOnFridges)
-                            {
-                                source.FridgeIngredients[j].Count -= countOnFridges;
-                                break;
-                            }
-                            else
-                            {
-                                countOnFridges -= source.FridgeIngredients[j].Count;
-                                source.FridgeIngredients[j].Count = 0;
-                            }
-                        }
+                        FridgeIngredient.Count -= countOnFridges;
+                        break;
+                    }
+                    else
+                    {
+                        countOnFridges -= FridgeIngredient.Count;
+                        FridgeIngredient.Count = 0;
                     }
                 }
             }
-            source.Requests[index].BakerId = model.BakerId;
-            source.Requests[index].DateBaking = DateTime.Now;
-            source.Requests[index].Status = RequestStatus.Выполняется;
+            element.BakerId = model.BakerId;
+            element.DateBaking = DateTime.Now;
+            element.Status = RequestStatus.Выполняется;
         }
     }
 }

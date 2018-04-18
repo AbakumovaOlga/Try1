@@ -21,18 +21,12 @@ namespace SweetShopService.ImplementationsList
 
         public void AddElement(CakeBindingModel model)
         {
-            int maxId = 0;
-            for (int i = 0; i < source.Cakes.Count; ++i)
+            Cake element = source.Cakes.FirstOrDefault(rec => rec.CakeName == model.CakeName);
+            if (element != null)
             {
-                if (source.Cakes[i].Id > maxId)
-                {
-                    maxId = source.Cakes[i].Id;
-                }
-                if (source.Cakes[i].CakeName == model.CakeName)
-                {
-                    throw new Exception("Уже есть пироженое с таким названием");
-                }
+                throw new Exception("Уже есть изделие с таким названием");
             }
+            int maxId = source.Cakes.Count > 0 ? source.Cakes.Max(rec => rec.Id) : 0;
             source.Cakes.Add(new Cake
             {
                 Id = maxId + 1,
@@ -40,101 +34,69 @@ namespace SweetShopService.ImplementationsList
                 Price = model.Price
             });
             // компоненты для изделия
-            int maxPCId = 0;
-            for (int i = 0; i < source.CakeIngredients.Count; ++i)
-            {
-                if (source.CakeIngredients[i].Id > maxPCId)
-                {
-                    maxPCId = source.CakeIngredients[i].Id;
-                }
-            }
+            int maxPCId = source.CakeIngredients.Count > 0 ?
+source.CakeIngredients.Max(rec => rec.Id) : 0;
             // убираем дубли по компонентам
-            for (int i = 0; i < model.CakeIngredients.Count; ++i)
-            {
-                for (int j = 1; j < model.CakeIngredients.Count; ++j)
-                {
-                    if (model.CakeIngredients[i].IngredientId ==
-                        model.CakeIngredients[j].IngredientId)
-                    {
-                        model.CakeIngredients[i].Count +=
-                            model.CakeIngredients[j].Count;
-                        model.CakeIngredients.RemoveAt(j--);
-                    }
-                }
-            }
+            var groupIngredients = model.CakeIngredients
+                                        .GroupBy(rec => rec.IngredientId)
+                                       .Select(rec => new
+                                       {
+                                           IngredientId = rec.Key,
+                                           Count = rec.Sum(r => r.Count)
+                                       });
             // добавляем компоненты
-            for (int i = 0; i < model.CakeIngredients.Count; ++i)
+            foreach (var groupIngredient in groupIngredients)
             {
                 source.CakeIngredients.Add(new CakeIngredient
                 {
                     Id = ++maxPCId,
                     CakeId = maxId + 1,
-                    IngredientId = model.CakeIngredients[i].IngredientId,
-                    Count = model.CakeIngredients[i].Count
+                    IngredientId = groupIngredient.IngredientId,
+                    Count = groupIngredient.Count
                 });
             }
         }
 
         public void DelElement(int id)
         {
-            // удаяем записи по компонентам при удалении изделия
-            for (int i = 0; i < source.CakeIngredients.Count; ++i)
+            Cake element = source.Cakes.FirstOrDefault(rec => rec.Id == id);
+            if (element != null)
             {
-                if (source.CakeIngredients[i].CakeId == id)
-                {
-                    source.CakeIngredients.RemoveAt(i--);
-                }
+                // удаяем записи по компонентам при удалении изделия
+                source.CakeIngredients.RemoveAll(rec => rec.CakeId == id);
+                source.Cakes.Remove(element);
             }
-            for (int i = 0; i < source.Cakes.Count; ++i)
+            else
             {
-                if (source.Cakes[i].Id == id)
-                {
-                    source.Cakes.RemoveAt(i);
-                    return;
-                }
+                throw new Exception("Пироженое не найдено");
             }
-            throw new Exception("Пироженое не найдено");
+
         }
 
         public CakeViewModel GetElement(int id)
         {
-            for (int i = 0; i < source.Cakes.Count; ++i)
+            Cake element = source.Cakes.FirstOrDefault(rec => rec.Id == id);
+            if (element != null)
             {
-                // требуется дополнительно получить список компонентов для изделия и их количество
-                List<CakeIngredientViewModel> cakeIngredients = new List<CakeIngredientViewModel>();
-                for (int j = 0; j < source.CakeIngredients.Count; ++j)
+                return new CakeViewModel
+
                 {
-                    if (source.CakeIngredients[j].CakeId == source.Cakes[i].Id)
-                    {
-                        string IngredientName = string.Empty;
-                        for (int k = 0; k < source.Ingredients.Count; ++k)
-                        {
-                            if (source.CakeIngredients[j].IngredientId == source.Ingredients[k].Id)
-                            {
-                                IngredientName = source.Ingredients[k].IngredientName;
-                                break;
-                            }
-                        }
-                        cakeIngredients.Add(new CakeIngredientViewModel
-                        {
-                            Id = source.CakeIngredients[j].Id,
-                            CakeId = source.CakeIngredients[j].CakeId,
-                            IngredientId = source.CakeIngredients[j].IngredientId,
-                            IngredientName = IngredientName,
-                            Count = source.CakeIngredients[j].Count
-                        });
-                    }
-                }
-                if (source.Cakes[i].Id == id)
-                {
-                    return new CakeViewModel
-                    {
-                        Id = source.Cakes[i].Id,
-                        CakeName = source.Cakes[i].CakeName,
-                        Price = source.Cakes[i].Price,
-                        CakeIngredients = cakeIngredients
-                    };
-                }
+                    Id = element.Id,
+                    CakeName = element.CakeName,
+                    Price = element.Price,
+                    CakeIngredients = source.CakeIngredients
+                             .Where(recPC => recPC.CakeId == element.Id)
+                             .Select(recPC => new CakeIngredientViewModel
+                             {
+                                 Id = recPC.Id,
+                                 CakeId = recPC.CakeId,
+                                 IngredientId = recPC.IngredientId,
+                                 IngredientName = source.Ingredients
+                                        .FirstOrDefault(recC => recC.Id == recPC.IngredientId)?.IngredientName,
+                                 Count = recPC.Count
+                             })
+                             .ToList()
+                };
             }
 
             throw new Exception("Пироженое не найдено");
@@ -142,124 +104,87 @@ namespace SweetShopService.ImplementationsList
 
         public List<CakeViewModel> GetList()
         {
-            List<CakeViewModel> result = new List<CakeViewModel>();
-            for (int i = 0; i < source.Cakes.Count; ++i)
-            {
-                // требуется дополнительно получить список компонентов для изделия и их количество
-                List<CakeIngredientViewModel> CakeIngredients = new List<CakeIngredientViewModel>();
-                for (int j = 0; j < source.CakeIngredients.Count; ++j)
+            List<CakeViewModel> result = source.Cakes
+                .Select(rec => new CakeViewModel
+
                 {
-                    if (source.CakeIngredients[j].CakeId == source.Cakes[i].Id)
-                    {
-                        string IngredientName = string.Empty;
-                        for (int k = 0; k < source.Cakes.Count; ++k)
-                        {
-                            if (source.CakeIngredients[j].IngredientId == source.Ingredients[k].Id)
-                            {
-                                IngredientName = source.Ingredients[k].IngredientName;
-                                break;
-                            }
-                        }
-                        CakeIngredients.Add(new CakeIngredientViewModel
-                        {
-                            Id = source.CakeIngredients[j].Id,
-                            CakeId = source.CakeIngredients[j].CakeId,
-                            IngredientId = source.CakeIngredients[j].IngredientId,
-                            IngredientName = IngredientName,
-                            Count = source.CakeIngredients[j].Count
-                        });
-                    }
-                }
-                result.Add(new CakeViewModel
-                {
-                    Id = source.Cakes[i].Id,
-                    CakeName = source.Cakes[i].CakeName,
-                    Price = source.Cakes[i].Price,
-                    CakeIngredients = CakeIngredients
-                });
-            }
+                    Id = rec.Id,
+                    CakeName = rec.CakeName,
+                    Price = rec.Price,
+                    CakeIngredients = source.CakeIngredients
+                             .Where(recPC => recPC.CakeId == rec.Id)
+                             .Select(recPC => new CakeIngredientViewModel
+                             {
+                                 Id = recPC.Id,
+                                 CakeId = recPC.CakeId,
+                                 IngredientId = recPC.IngredientId,
+                                 IngredientName = source.Ingredients
+                                     .FirstOrDefault(recC => recC.Id == recPC.IngredientId)?.IngredientName,
+                                 Count = recPC.Count
+                             })
+                            .ToList()
+                })
+                 .ToList();
             return result;
         }
 
         public void UpdElement(CakeBindingModel model)
         {
-            int index = -1;
-            for (int i = 0; i < source.Cakes.Count; ++i)
+            Cake element = source.Cakes.FirstOrDefault(rec =>
+  rec.CakeName == model.CakeName && rec.Id != model.Id);
+            if (element != null)
             {
-                if (source.Cakes[i].Id == model.Id)
-                {
-                    index = i;
-                }
-                if (source.Cakes[i].CakeName == model.CakeName &&
-                    source.Cakes[i].Id != model.Id)
-                {
-                    throw new Exception("Уже есть пироженое с таким названием");
-                }
+                throw new Exception("Уже есть изделие с таким названием");
             }
-            if (index == -1)
+            element = source.Cakes.FirstOrDefault(rec => rec.Id == model.Id);
+            if (element == null)
             {
                 throw new Exception("Пироженое не найдено");
             }
-            source.Cakes[index].CakeName = model.CakeName;
-            source.Cakes[index].Price = model.Price;
-            int maxPCId = 0;
-            for (int i = 0; i < source.CakeIngredients.Count; ++i)
-            {
-                if (source.CakeIngredients[i].Id > maxPCId)
-                {
-                    maxPCId = source.CakeIngredients[i].Id;
-                }
-            }
+            element.CakeName = model.CakeName;
+            element.Price = model.Price;
+
+            int maxPCId = source.CakeIngredients.Count > 0 ? source.CakeIngredients.Max(rec => rec.Id) : 0;
             // обновляем существуюущие компоненты
-            for (int i = 0; i < source.CakeIngredients.Count; ++i)
+            var compIds = model.CakeIngredients.Select(rec => rec.IngredientId).Distinct();
+            var updateIngredients = source.CakeIngredients
+                                            .Where(rec => rec.CakeId == model.Id &&
+compIds.Contains(rec.IngredientId));
+            foreach (var updateIngredient in updateIngredients)
             {
-                if (source.CakeIngredients[i].CakeId == model.Id)
-                {
-                    bool flag = true;
-                    for (int j = 0; j < model.CakeIngredients.Count; ++j)
-                    {
-                        // если встретили, то изменяем количество
-                        if (source.CakeIngredients[i].Id == model.CakeIngredients[j].Id)
-                        {
-                            source.CakeIngredients[i].Count = model.CakeIngredients[j].Count;
-                            flag = false;
-                            break;
-                        }
-                    }
-                    // если не встретили, то удаляем
-                    if (flag)
-                    {
-                        source.CakeIngredients.RemoveAt(i--);
-                    }
-                }
+                updateIngredient.Count = model.CakeIngredients
+                                                .FirstOrDefault(rec => rec.Id == updateIngredient.Id).Count;
+
             }
+            source.CakeIngredients.RemoveAll(rec => rec.CakeId == model.Id &&
+!compIds.Contains(rec.IngredientId));
             // новые записи
-            for (int i = 0; i < model.CakeIngredients.Count; ++i)
+            var groupIngredients = model.CakeIngredients
+                                         .Where(rec => rec.Id == 0)
+                                         .GroupBy(rec => rec.IngredientId)
+                                        .Select(rec => new
+                                        {
+                                            IngredientId = rec.Key,
+                                            Count = rec.Sum(r => r.Count)
+                                        });
+            foreach (var groupIngredient in groupIngredients)
             {
-                if (model.CakeIngredients[i].Id == 0)
+                CakeIngredient elementPC = source.CakeIngredients
+                                         .FirstOrDefault(rec => rec.CakeId == model.Id &&
+  rec.IngredientId == groupIngredient.IngredientId);
+                if (elementPC != null)
                 {
-                    // ищем дубли
-                    for (int j = 0; j < source.CakeIngredients.Count; ++j)
+                    elementPC.Count += groupIngredient.Count;
+                }
+                else
+                {
+                    source.CakeIngredients.Add(new CakeIngredient
                     {
-                        if (source.CakeIngredients[j].CakeId == model.Id &&
-                            source.CakeIngredients[j].IngredientId == model.CakeIngredients[i].IngredientId)
-                        {
-                            source.CakeIngredients[j].Count += model.CakeIngredients[i].Count;
-                            model.CakeIngredients[i].Id = source.CakeIngredients[j].Id;
-                            break;
-                        }
-                    }
-                    // если не нашли дубли, то новая запись
-                    if (model.CakeIngredients[i].Id == 0)
-                    {
-                        source.CakeIngredients.Add(new CakeIngredient
-                        {
-                            Id = ++maxPCId,
-                            CakeId = model.Id,
-                            IngredientId = model.CakeIngredients[i].IngredientId,
-                            Count = model.CakeIngredients[i].Count
-                        });
-                    }
+                        Id = ++maxPCId,
+                        CakeId = model.Id,
+                        IngredientId = groupIngredient.IngredientId,
+                        Count = groupIngredient.Count
+                    });
                 }
             }
         }
