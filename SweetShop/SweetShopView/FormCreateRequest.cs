@@ -69,7 +69,7 @@ namespace SweetShopView
                     int id = Convert.ToInt32(FCRCake.SelectedValue);
                     CakeViewModel Cake = serviceCake.GetElement(id);
                     int Number = Convert.ToInt32(FCRNumber.Text);
-                    FCRSum.Text = (Number * Cake.Price).ToString();
+                    FCRSum.Text = (Number * (int)Cake.Price).ToString();
                 }
                 catch (Exception ex)
                 {

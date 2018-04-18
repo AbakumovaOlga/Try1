@@ -1,4 +1,5 @@
-﻿using SweetShopService.Interfaces;
+﻿using SweetShopService.BindingModels;
+using SweetShopService.Interfaces;
 using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -19,11 +20,13 @@ namespace SweetShopView
         public new IUnityContainer Container { get; set; }
 
         private readonly IMainService service;
+        private readonly IReportService reportService;
 
-        public FormMain(IMainService service)
+        public FormMain(IMainService service, IReportService reportService)
         {
             InitializeComponent();
             this.service = service;
+            this.reportService = reportService;
         }
 
         private void FormMain_Load(object sender, EventArgs e)
@@ -149,6 +152,41 @@ namespace SweetShopView
         private void FMList_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
+        }
+
+        private void priceCakesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog sfd = new SaveFileDialog
+            {
+                Filter = "doc|*.doc|docx|*.docx"
+            };
+            if (sfd.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    reportService.SaveCakePrice(new ReportBindingModel
+                    {
+                        FileName = sfd.FileName
+                    });
+                    MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void fullnessOfFridgesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var form = Container.Resolve<FormFridgesLoad>();
+            form.ShowDialog();
+        }
+
+        private void customersRequestsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var form = Container.Resolve<FormCustomerRequests>();
+            form.ShowDialog();
         }
     }
 }
