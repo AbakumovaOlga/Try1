@@ -36,6 +36,10 @@
             this.fridgesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bakersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.replenishFridgeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.rreportsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.priceCakesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.fullnessOfFridgesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.customersRequestsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.FMList = new System.Windows.Forms.DataGridView();
             this.FMCreate = new System.Windows.Forms.Button();
             this.FMTake = new System.Windows.Forms.Button();
@@ -51,7 +55,8 @@
             this.menuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.catalogsToolStripMenuItem,
-            this.replenishFridgeToolStripMenuItem});
+            this.replenishFridgeToolStripMenuItem,
+            this.rreportsToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(1413, 33);
@@ -111,6 +116,37 @@
             this.replenishFridgeToolStripMenuItem.Size = new System.Drawing.Size(151, 29);
             this.replenishFridgeToolStripMenuItem.Text = "Replenish fridge";
             this.replenishFridgeToolStripMenuItem.Click += new System.EventHandler(this.replenishFridgeToolStripMenuItem_Click);
+            // 
+            // rreportsToolStripMenuItem
+            // 
+            this.rreportsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.priceCakesToolStripMenuItem,
+            this.fullnessOfFridgesToolStripMenuItem,
+            this.customersRequestsToolStripMenuItem});
+            this.rreportsToolStripMenuItem.Name = "rreportsToolStripMenuItem";
+            this.rreportsToolStripMenuItem.Size = new System.Drawing.Size(92, 29);
+            this.rreportsToolStripMenuItem.Text = "Rreports";
+            // 
+            // priceCakesToolStripMenuItem
+            // 
+            this.priceCakesToolStripMenuItem.Name = "priceCakesToolStripMenuItem";
+            this.priceCakesToolStripMenuItem.Size = new System.Drawing.Size(258, 30);
+            this.priceCakesToolStripMenuItem.Text = "Price Cakes";
+            this.priceCakesToolStripMenuItem.Click += new System.EventHandler(this.priceCakesToolStripMenuItem_Click);
+            // 
+            // fullnessOfFridgesToolStripMenuItem
+            // 
+            this.fullnessOfFridgesToolStripMenuItem.Name = "fullnessOfFridgesToolStripMenuItem";
+            this.fullnessOfFridgesToolStripMenuItem.Size = new System.Drawing.Size(258, 30);
+            this.fullnessOfFridgesToolStripMenuItem.Text = "Fullness of Fridges";
+            this.fullnessOfFridgesToolStripMenuItem.Click += new System.EventHandler(this.fullnessOfFridgesToolStripMenuItem_Click);
+            // 
+            // customersRequestsToolStripMenuItem
+            // 
+            this.customersRequestsToolStripMenuItem.Name = "customersRequestsToolStripMenuItem";
+            this.customersRequestsToolStripMenuItem.Size = new System.Drawing.Size(258, 30);
+            this.customersRequestsToolStripMenuItem.Text = "Customer`s requests";
+            this.customersRequestsToolStripMenuItem.Click += new System.EventHandler(this.customersRequestsToolStripMenuItem_Click);
             // 
             // FMList
             // 
@@ -212,6 +248,10 @@
         private System.Windows.Forms.Button FMFinish;
         private System.Windows.Forms.Button FMPay;
         private System.Windows.Forms.Button FMRel;
+        private System.Windows.Forms.ToolStripMenuItem rreportsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem priceCakesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem fullnessOfFridgesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem customersRequestsToolStripMenuItem;
     }
 }
 
