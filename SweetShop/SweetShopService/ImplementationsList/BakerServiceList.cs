@@ -21,12 +21,18 @@ namespace SweetShopService.ImplementationsList
 
         public void AddElement(BakerBindingModel model)
         {
-            Baker element = source.Bakers.FirstOrDefault(rec => rec.BakerFIO == model.BakerFIO);
-            if (element != null)
+            int maxId = 0;
+            for (int i = 0; i < source.Bakers.Count; ++i)
             {
-                throw new Exception("Уже есть сотрудник с таким ФИО");
+                if (source.Bakers[i].Id > maxId)
+                {
+                    maxId = source.Bakers[i].Id;
+                }
+                if (source.Bakers[i].BakerFIO == model.BakerFIO)
+                {
+                    throw new Exception("Уже есть пекарь с таким ФИО");
+                }
             }
-            int maxId = source.Bakers.Count > 0 ? source.Bakers.Max(rec => rec.Id) : 0;
             source.Bakers.Add(new Baker
             {
                 Id = maxId + 1,
@@ -36,57 +42,67 @@ namespace SweetShopService.ImplementationsList
 
         public void DelElement(int id)
         {
-            Baker element = source.Bakers.FirstOrDefault(rec => rec.Id == id);
-            if (element != null)
+            for (int i = 0; i < source.Bakers.Count; ++i)
             {
-                source.Bakers.Remove(element);
+                if (source.Bakers[i].Id == id)
+                {
+                    source.Bakers.RemoveAt(i);
+                    return;
+                }
             }
-            else
-            {
-                throw new Exception("Пекарь не найден");
-            }
+            throw new Exception("Пекарь не найден");
         }
 
         public BakerViewModel GetElement(int id)
         {
-            Baker element = source.Bakers.FirstOrDefault(rec => rec.Id == id);
-            if (element != null)
+            for (int i = 0; i < source.Bakers.Count; ++i)
             {
-                return new BakerViewModel
+                if (source.Bakers[i].Id == id)
                 {
-                    Id = element.Id,
-                    BakerFIO = element.BakerFIO
-                };
+                    return new BakerViewModel
+                    {
+                        Id = source.Bakers[i].Id,
+                        BakerFIO = source.Bakers[i].BakerFIO
+                    };
+                }
             }
             throw new Exception("Пекарь не найден");
         }
 
         public List<BakerViewModel> GetList()
         {
-            List<BakerViewModel> result = source.Bakers
-                 .Select(rec => new BakerViewModel
-                 {
-                     Id = rec.Id,
-                     BakerFIO = rec.BakerFIO
-                 })
-                 .ToList();
+            List<BakerViewModel> result = new List<BakerViewModel>();
+            for (int i = 0; i < source.Bakers.Count; ++i)
+            {
+                result.Add(new BakerViewModel
+                {
+                    Id = source.Bakers[i].Id,
+                    BakerFIO = source.Bakers[i].BakerFIO
+                });
+            }
             return result;
         }
 
         public void UpdElement(BakerBindingModel model)
         {
-            Baker element = source.Bakers.FirstOrDefault(rec =>
- rec.BakerFIO == model.BakerFIO && rec.Id != model.Id);
-            if (element != null)
+            int index = -1;
+            for (int i = 0; i < source.Bakers.Count; ++i)
             {
-                throw new Exception("Уже есть сотрудник с таким ФИО");
+                if (source.Bakers[i].Id == model.Id)
+                {
+                    index = i;
+                }
+                if (source.Bakers[i].BakerFIO == model.BakerFIO &&
+                    source.Bakers[i].Id != model.Id)
+                {
+                    throw new Exception("Уже есть пекарь с таким ФИО");
+                }
             }
-            element = source.Bakers.FirstOrDefault(rec => rec.Id == model.Id);
-            if (element == null)
+            if (index == -1)
             {
                 throw new Exception("Пекарь не найден");
             }
-            element.BakerFIO = model.BakerFIO;
+            source.Bakers[index].BakerFIO = model.BakerFIO;
         }
     }
 }

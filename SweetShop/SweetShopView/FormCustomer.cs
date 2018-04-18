@@ -20,7 +20,7 @@ namespace SweetShopView
 
         public new IUnityContainer Container { get; set; }
 
-        public int Id { set { id = value; } }
+        public int Id { set { Id = value; } }
 
         private readonly ICustomerService service;
 
