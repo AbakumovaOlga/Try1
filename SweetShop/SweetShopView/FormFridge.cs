@@ -31,24 +31,20 @@ namespace SweetShopView
             {
                 try
                 {
-                    var response = APICustomer.GetRequest("api/Fridge/Get/" + id.Value);
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        var Fridge = APICustomer.GetElement<FridgeViewModel>(response);
-                        FFrName.Text = Fridge.FridgeName;
-                        dataGridView.DataSource = Fridge.FridgeIngredients;
-                        dataGridView.Columns[0].Visible = false;
-                        dataGridView.Columns[1].Visible = false;
-                        dataGridView.Columns[2].Visible = false;
-                        dataGridView.Columns[3].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                    }
-                    else
-                    {
-                        throw new Exception(APICustomer.GetError(response));
-                    }
+                    var Fridge = Task.Run(() => APICustomer.GetRequestData<FridgeViewModel>("api/Fridge/Get/" + id.Value)).Result;
+                    FFrName.Text = Fridge.FridgeName;
+                    dataGridView.DataSource = Fridge.FridgeIngredients;
+                    dataGridView.Columns[0].Visible = false;
+                    dataGridView.Columns[1].Visible = false;
+                    dataGridView.Columns[2].Visible = false;
+                    dataGridView.Columns[3].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 }
                 catch (Exception ex)
                 {
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -61,47 +57,43 @@ namespace SweetShopView
                 MessageBox.Show("Заполните название", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            try
+            string name = FFrName.Text;
+            Task task;
+            if (id.HasValue)
             {
-                Task<HttpResponseMessage> response;
-                if (id.HasValue)
+                task = Task.Run(() => APICustomer.PostRequestData("api/Fridge/UpdElement", new FridgeBindingModel
                 {
-                    response = APICustomer.PostRequest("api/Fridge/UpdElement", new FridgeBindingModel
-                    {
-                        Id = id.Value,
-                        FridgeName = FFrName.Text
-                    });
-                }
-                else
-                {
-                    response = APICustomer.PostRequest("api/Fridge/AddElement", new FridgeBindingModel
-                    {
-                        FridgeName = FFrName.Text
-                    });
-                }
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APICustomer.GetError(response));
-                }
+                    Id = id.Value,
+                    FridgeName = name
+                }));
             }
-            catch (Exception ex)
+            else
             {
+                task = Task.Run(() => APICustomer.PostRequestData("api/Fridge/AddElement", new FridgeBindingModel
+                {
+                    FridgeName = name
+                }));
+            }
+
+            task.ContinueWith((prevTask) => MessageBox.Show("Сохранение прошло успешно. Обновите список", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+            task.ContinueWith((prevTask) =>
+            {
+                var ex = (Exception)prevTask.Exception;
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            }, TaskContinuationOptions.OnlyOnFaulted);
+
+            Close();
         }
 
         private void FFrCancel_Click(object sender, EventArgs e)
         {
-            DialogResult = DialogResult.Cancel;
             Close();
         }
-
         private void FFrName_TextChanged(object sender, EventArgs e)
         {
 

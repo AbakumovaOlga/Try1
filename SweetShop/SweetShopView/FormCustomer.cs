@@ -31,19 +31,15 @@ namespace SweetShopView
             {
                 try
                 {
-                    var response = APICustomer.GetRequest("api/Customer/Get/" + id.Value);
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        var Customer = APICustomer.GetElement<CustomerViewModel>(response);
-                        FCusFIO.Text = Customer.CustomerFIO;
-                    }
-                    else
-                    {
-                        throw new Exception(APICustomer.GetError(response));
-                    }
+                    var Customer = Task.Run(() => APICustomer.GetRequestData<CustomerViewModel>("api/Customer/Get/" + id.Value)).Result;
+                    FCusFIO.Text = Customer.CustomerFIO;
                 }
                 catch (Exception ex)
                 {
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -56,44 +52,41 @@ namespace SweetShopView
                 MessageBox.Show("Заполните ФИО", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            try
+            string fio = FCusFIO.Text;
+            Task task;
+            if (id.HasValue)
             {
-                Task<HttpResponseMessage> response;
-                if (id.HasValue)
+                task = Task.Run(() => APICustomer.PostRequestData("api/Customer/UpdElement", new CustomerBindingModel
                 {
-                    response = APICustomer.PostRequest("api/Customer/UpdElement", new CustomerBindingModel
-                    {
-                        Id = id.Value,
-                        CustomerFIO = FCusFIO.Text
-                    });
-                }
-                else
-                {
-                    response = APICustomer.PostRequest("api/Customer/AddElement", new CustomerBindingModel
-                    {
-                        CustomerFIO = FCusFIO.Text
-                    });
-                }
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APICustomer.GetError(response));
-                }
+                    Id = id.Value,
+                    CustomerFIO = fio
+                }));
             }
-            catch (Exception ex)
+            else
             {
+                task = Task.Run(() => APICustomer.PostRequestData("api/Customer/AddElement", new CustomerBindingModel
+                {
+                    CustomerFIO = fio
+                }));
+            }
+
+            task.ContinueWith((prevTask) => MessageBox.Show("Сохранение прошло успешно. Обновите список", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+            task.ContinueWith((prevTask) =>
+            {
+                var ex = (Exception)prevTask.Exception;
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            }, TaskContinuationOptions.OnlyOnFaulted);
+
+            Close();
         }
 
         private void FCusCancel_Click(object sender, EventArgs e)
         {
-            DialogResult = DialogResult.Cancel;
             Close();
         }
         private void FCusFIO_TextChanged(object sender, EventArgs e)
