@@ -7,34 +7,22 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace SweetShopView
 {
     public partial class FormBaker : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly IBakerService service;
 
         private int? id;
 
-        public FormBaker(IBakerService service)
+        public FormBaker()
         {
             InitializeComponent();
-            this.service = service;
-        }
-
-        private void FBakFIO_TextChanged(object sender, EventArgs e)
-        {
-
         }
 
         private void FormBaker_Load(object sender, EventArgs e)
@@ -43,10 +31,15 @@ namespace SweetShopView
             {
                 try
                 {
-                    BakerViewModel view = service.GetElement(id.Value);
-                    if (view != null)
+                    var response = APICustomer.GetRequest("api/Baker/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
                     {
-                        FBakFIO.Text = view.BakerFIO;
+                        var Baker = APICustomer.GetElement<BakerViewModel>(response);
+                        FBakFIO.Text = Baker.BakerFIO;
+                    }
+                    else
+                    {
+                        throw new Exception(APICustomer.GetError(response));
                     }
                 }
                 catch (Exception ex)
@@ -65,9 +58,10 @@ namespace SweetShopView
             }
             try
             {
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new BakerBindingModel
+                    response = APICustomer.PostRequest("api/Baker/UpdElement", new BakerBindingModel
                     {
                         Id = id.Value,
                         BakerFIO = FBakFIO.Text
@@ -75,14 +69,21 @@ namespace SweetShopView
                 }
                 else
                 {
-                    service.AddElement(new BakerBindingModel
+                    response = APICustomer.PostRequest("api/Baker/AddElement", new BakerBindingModel
                     {
                         BakerFIO = FBakFIO.Text
                     });
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                DialogResult = DialogResult.OK;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    DialogResult = DialogResult.OK;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
             }
             catch (Exception ex)
             {
@@ -94,6 +95,10 @@ namespace SweetShopView
         {
             DialogResult = DialogResult.Cancel;
             Close();
+        }
+        private void FBakFIO_TextChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

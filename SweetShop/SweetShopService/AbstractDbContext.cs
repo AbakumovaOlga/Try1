@@ -9,10 +9,10 @@ using System.Threading.Tasks;
 
 namespace SweetShopService
 {
-    [Table("AbstractDatabase")]
+   // [Table("AbstractDatabase")]
     public class AbstractDbContext : DbContext
     {
-        public AbstractDbContext()
+        public AbstractDbContext() : base("AbstractDatabase")
         {
             //настройки конфигурации для entity
             Configuration.ProxyCreationEnabled = false;

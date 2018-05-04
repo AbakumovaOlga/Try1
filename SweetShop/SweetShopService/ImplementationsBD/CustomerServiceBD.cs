@@ -1,6 +1,7 @@
 ﻿using SweetShop;
 using SweetShopService.BindingModels;
 using SweetShopService.Interfaces;
+using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;

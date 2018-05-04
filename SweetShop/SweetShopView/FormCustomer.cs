@@ -1,35 +1,28 @@
 ﻿using SweetShopService.BindingModels;
 using SweetShopService.Interfaces;
+using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace SweetShopView
 {
     public partial class FormCustomer : Form
     {
-        [Dependency]
-
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly ICustomerService service;
 
         private int? id;
 
-        public FormCustomer(ICustomerService service)
+        public FormCustomer()
         {
             InitializeComponent();
-            this.service = service;
         }
 
         private void FormCustomer_Load(object sender, EventArgs e)
@@ -38,15 +31,20 @@ namespace SweetShopView
             {
                 try
                 {
-                    CustomerViewModel view = service.GetElement(id.Value);
-                    if (view != null)
+                    var response = APICustomer.GetRequest("api/Customer/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
                     {
-                        FCusFIO.Text = view.CustomerFIO;
+                        var Customer = APICustomer.GetElement<CustomerViewModel>(response);
+                        FCusFIO.Text = Customer.CustomerFIO;
+                    }
+                    else
+                    {
+                        throw new Exception(APICustomer.GetError(response));
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -55,14 +53,15 @@ namespace SweetShopView
         {
             if (string.IsNullOrEmpty(FCusFIO.Text))
             {
-                MessageBox.Show("Check FIO", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Заполните ФИО", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             try
             {
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new CustomerBindingModel
+                    response = APICustomer.PostRequest("api/Customer/UpdElement", new CustomerBindingModel
                     {
                         Id = id.Value,
                         CustomerFIO = FCusFIO.Text
@@ -70,18 +69,25 @@ namespace SweetShopView
                 }
                 else
                 {
-                    service.AddElement(new CustomerBindingModel
+                    response = APICustomer.PostRequest("api/Customer/AddElement", new CustomerBindingModel
                     {
                         CustomerFIO = FCusFIO.Text
                     });
                 }
-                MessageBox.Show("Save: Successful", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                DialogResult = DialogResult.OK;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    DialogResult = DialogResult.OK;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -90,7 +96,6 @@ namespace SweetShopView
             DialogResult = DialogResult.Cancel;
             Close();
         }
-
         private void FCusFIO_TextChanged(object sender, EventArgs e)
         {
 

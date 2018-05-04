@@ -10,29 +10,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace SweetShopView
 {
     public partial class FormTakeRequestInWork : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly IBakerService serviceB;
-
-        private readonly IMainService serviceM;
 
         private int? id;
 
-        public FormTakeRequestInWork(IBakerService serviceB, IMainService serviceM)
+        public FormTakeRequestInWork()
         {
             InitializeComponent();
-            this.serviceB = serviceB;
-            this.serviceM = serviceM;
         }
 
         private void FormBaker_Load(object sender, EventArgs e)
@@ -44,13 +33,21 @@ namespace SweetShopView
                     MessageBox.Show("Не указан заказ", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Close();
                 }
-                List<BakerViewModel> listI = serviceB.GetList();
-                if (listI != null)
+                var response = APICustomer.GetRequest("api/Baker/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    FTRBaker.DisplayMember = "BakerFIO";
-                    FTRBaker.ValueMember = "Id";
-                    FTRBaker.DataSource = listI;
-                    FTRBaker.SelectedItem = null;
+                    List<BakerViewModel> list = APICustomer.GetElement<List<BakerViewModel>>(response);
+                    if (list != null)
+                    {
+                        FTRBaker.DisplayMember = "BakerFIO";
+                        FTRBaker.ValueMember = "Id";
+                        FTRBaker.DataSource = list;
+                        FTRBaker.SelectedItem = null;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -68,14 +65,21 @@ namespace SweetShopView
             }
             try
             {
-                serviceM.TakeRequestInWork(new RequestBindingModel
+                var response = APICustomer.PostRequest("api/Main/TakeOrderInWork", new RequestBindingModel
                 {
                     Id = id.Value,
                     BakerId = Convert.ToInt32(FTRBaker.SelectedValue)
                 });
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                DialogResult = DialogResult.OK;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    DialogResult = DialogResult.OK;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
             }
             catch (Exception ex)
             {

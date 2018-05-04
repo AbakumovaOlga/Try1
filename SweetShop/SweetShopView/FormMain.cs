@@ -9,44 +9,37 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace SweetShopView
 {
     public partial class FormMain : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IMainService service;
-        private readonly IReportService reportService;
-
-        public FormMain(IMainService service, IReportService reportService)
+        public FormMain()
         {
             InitializeComponent();
-            this.service = service;
-            this.reportService = reportService;
-        }
-
-        private void FormMain_Load(object sender, EventArgs e)
-        {
-
         }
 
         private void LoadData()
         {
             try
             {
-                List<RequestViewModel> list = service.GetList();
-                if (list != null)
+                var response = APICustomer.GetRequest("api/Main/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    FMList.DataSource = list;
-                    FMList.Columns[0].Visible = false;
-                    FMList.Columns[1].Visible = false;
-                    FMList.Columns[3].Visible = false;
-                    FMList.Columns[5].Visible = false;
-                    FMList.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    List<RequestViewModel> list = APICustomer.GetElement<List<RequestViewModel>>(response);
+                    if (list != null)
+                    {
+                        FMList.DataSource = list;
+                        FMList.Columns[0].Visible = false;
+                        FMList.Columns[1].Visible = false;
+                        FMList.Columns[3].Visible = false;
+                        FMList.Columns[5].Visible = false;
+                        FMList.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -57,43 +50,43 @@ namespace SweetShopView
 
         private void customersToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormCustomers>();
+            var form = new FormCustomers();
             form.ShowDialog();
         }
 
         private void ingredientsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormIngredients>();
+            var form = new FormIngredients();
             form.ShowDialog();
         }
 
         private void cakesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormCakes>();
+            var form = new FormCakes();
             form.ShowDialog();
         }
 
         private void fridgesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormFridges>();
+            var form = new FormFridges();
             form.ShowDialog();
         }
 
         private void bakersToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormBakers>();
+            var form = new FormBakers();
             form.ShowDialog();
         }
 
         private void replenishFridgeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormReplenishFridge>();
+            var form = new FormReplenishFridge();
             form.ShowDialog();
         }
 
         private void FMCreate_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormCreateRequest>();
+            var form = new FormCreateRequest();
             form.ShowDialog();
             LoadData();
         }
@@ -102,8 +95,10 @@ namespace SweetShopView
         {
             if (FMList.SelectedRows.Count == 1)
             {
-                var form = Container.Resolve<FormTakeRequestInWork>();
-                form.Id = Convert.ToInt32(FMList.SelectedRows[0].Cells[0].Value);
+                var form = new FormTakeRequestInWork
+                {
+                    Id = Convert.ToInt32(FMList.SelectedRows[0].Cells[0].Value)
+                };
                 form.ShowDialog();
                 LoadData();
             }
@@ -116,8 +111,18 @@ namespace SweetShopView
                 int id = Convert.ToInt32(FMList.SelectedRows[0].Cells[0].Value);
                 try
                 {
-                    service.FinishRequest(id);
-                    LoadData();
+                    var response = APICustomer.PostRequest("api/Main/FinishRequest", new RequestBindingModel
+                    {
+                        Id = id
+                    });
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        LoadData();
+                    }
+                    else
+                    {
+                        throw new Exception(APICustomer.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -133,25 +138,29 @@ namespace SweetShopView
                 int id = Convert.ToInt32(FMList.SelectedRows[0].Cells[0].Value);
                 try
                 {
-                    service.PayRequest(id);
-                    LoadData();
+                    var response = APICustomer.PostRequest("api/Main/.PayRequest", new RequestBindingModel
+                    {
+                        Id = id
+                    });
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        LoadData();
+                    }
+                    else
+                    {
+                        throw new Exception(APICustomer.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
-
         }
 
         private void FMRel_Click(object sender, EventArgs e)
         {
             LoadData();
-        }
-
-        private void FMList_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-
         }
 
         private void priceCakesToolStripMenuItem_Click(object sender, EventArgs e)
@@ -164,11 +173,18 @@ namespace SweetShopView
             {
                 try
                 {
-                    reportService.SaveCakePrice(new ReportBindingModel
+                    var response = APICustomer.PostRequest("api/Report/SaveCakePrice", new ReportBindingModel
                     {
                         FileName = sfd.FileName
                     });
-                    MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        throw new Exception(APICustomer.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -179,14 +195,22 @@ namespace SweetShopView
 
         private void fullnessOfFridgesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormFridgesLoad>();
+            var form = new FormFridgesLoad();
             form.ShowDialog();
         }
 
         private void customersRequestsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormCustomerRequests>();
+            var form = new FormCustomerRequests();
             form.ShowDialog();
+        }
+        private void FMList_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+        private void FormMain_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

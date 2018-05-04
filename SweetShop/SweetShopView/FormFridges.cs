@@ -1,4 +1,5 @@
-﻿using SweetShopService.Interfaces;
+﻿using SweetShopService.BindingModels;
+using SweetShopService.Interfaces;
 using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -9,38 +10,39 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace SweetShopView
 {
     public partial class FormFridges : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IFridgeService service;
-
-        public FormFridges(IFridgeService service)
+        public FormFridges()
         {
             InitializeComponent();
-            this.service = service;
         }
 
         private void FormFridges_Load(object sender, EventArgs e)
         {
             LoadData();
         }
+
         private void LoadData()
         {
             try
             {
-                List<FridgeViewModel> list = service.GetList();
-                if (list != null)
+                var response = APICustomer.GetRequest("api/Fridge/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    FFrSList.DataSource = list;
-                    FFrSList.Columns[0].Visible = false;
-                    FFrSList.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    List<FridgeViewModel> list = APICustomer.GetElement<List<FridgeViewModel>>(response);
+                    if (list != null)
+                    {
+                        FFrSList.DataSource = list;
+                        FFrSList.Columns[0].Visible = false;
+                        FFrSList.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -49,10 +51,9 @@ namespace SweetShopView
             }
         }
 
-
         private void FFrSAdd_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormFridge>();
+            var form = new FormFridge();
             if (form.ShowDialog() == DialogResult.OK)
             {
                 LoadData();
@@ -63,7 +64,7 @@ namespace SweetShopView
         {
             if (FFrSList.SelectedRows.Count == 1)
             {
-                var form = Container.Resolve<FormFridge>();
+                var form = new FormFridge();
                 form.Id = Convert.ToInt32(FFrSList.SelectedRows[0].Cells[0].Value);
                 if (form.ShowDialog() == DialogResult.OK)
                 {
@@ -81,7 +82,11 @@ namespace SweetShopView
                     int id = Convert.ToInt32(FFrSList.SelectedRows[0].Cells[0].Value);
                     try
                     {
-                        service.DelElement(id);
+                        var response = APICustomer.PostRequest("api/Fridge/DelElement", new CustomerBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APICustomer.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {

@@ -1,5 +1,6 @@
 ﻿using SweetShopService.BindingModels;
 using SweetShopService.Interfaces;
+using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -9,32 +10,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace SweetShopView
 {
     public partial class FormFridgesLoad : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IReportService service;
-        public FormFridgesLoad(IReportService service)
+        public FormFridgesLoad()
         {
             InitializeComponent();
-            this.service = service;
         }
 
         private void FormFridgesLoad_Load(object sender, EventArgs e)
         {
             try
             {
-                var dict = service.GetFridgesLoad();
-                if (dict != null)
+                var response = APICustomer.GetRequest("api/Report/GetFridgesLoad");
+                if (response.Result.IsSuccessStatusCode)
                 {
                     dataGridView.Rows.Clear();
-                    foreach (var elem in dict)
+                    foreach (var elem in APICustomer.GetElement<List<FridgesLoadViewModel>>(response))
                     {
                         dataGridView.Rows.Add(new object[] { elem.FridgeName, "", "" });
                         foreach (var listElem in elem.Ingredients)
@@ -44,6 +38,10 @@ namespace SweetShopView
                         dataGridView.Rows.Add(new object[] { "Итого", "", elem.TotalCount });
                         dataGridView.Rows.Add(new object[] { });
                     }
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -62,11 +60,18 @@ namespace SweetShopView
             {
                 try
                 {
-                    service.SaveFridgesLoad(new ReportBindingModel
+                    var response = APICustomer.PostRequest("api/Report/SaveFridgesLoad", new ReportBindingModel
                     {
                         FileName = sfd.FileName
                     });
-                    MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        throw new Exception(APICustomer.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {

@@ -1,4 +1,6 @@
-﻿using SweetShopService.Interfaces;
+﻿using SweetShopService.BindingModels;
+using SweetShopService.Interfaces;
+using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -8,23 +10,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace SweetShopView
 {
     public partial class FormCustomers : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly ICustomerService service;
-
-        public FormCustomers(ICustomerService service)
+        public FormCustomers()
         {
             InitializeComponent();
-            this.service = service;
         }
+
         private void FormCustomers_Load(object sender, EventArgs e)
         {
             LoadData();
@@ -34,23 +29,31 @@ namespace SweetShopView
         {
             try
             {
-                List<CustomerViewModel> list = service.GetList();
-                if (list != null)
+                var response = APICustomer.GetRequest("api/Customer/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    FCusSList.DataSource = list;
-                    FCusSList.Columns[0].Visible = false;
-                    FCusSList.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    List<CustomerViewModel> list = APICustomer.GetElement<List<CustomerViewModel>>(response);
+                    if (list != null)
+                    {
+                        FCusSList.DataSource = list;
+                        FCusSList.Columns[0].Visible = false;
+                        FCusSList.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void FCusSAdd_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormCustomer>();
+            var form = new FormCustomer();
             if (form.ShowDialog() == DialogResult.OK)
             {
                 LoadData();
@@ -61,7 +64,7 @@ namespace SweetShopView
         {
             if (FCusSList.SelectedRows.Count == 1)
             {
-                var form = Container.Resolve<FormCustomer>();
+                var form = new FormCustomer();
                 form.Id = Convert.ToInt32(FCusSList.SelectedRows[0].Cells[0].Value);
                 if (form.ShowDialog() == DialogResult.OK)
                 {
@@ -79,16 +82,21 @@ namespace SweetShopView
                     int id = Convert.ToInt32(FCusSList.SelectedRows[0].Cells[0].Value);
                     try
                     {
-                        service.DelElement(id);
+                        var response = APICustomer.PostRequest("api/Customer/DelElement", new CustomerBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APICustomer.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                     LoadData();
                 }
             }
         }
+
 
         private void FCusSRel_Click(object sender, EventArgs e)
         {
