@@ -33,22 +33,18 @@ namespace SweetShopView
             {
                 try
                 {
-                    var response = APICustomer.GetRequest("api/Cake/Get/" + id.Value);
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        var Cake = APICustomer.GetElement<CakeViewModel>(response);
-                        FCakeName.Text = Cake.CakeName;
-                        FCakePrice.Text = Cake.Price.ToString();
-                        CakeIngredients = Cake.CakeIngredients;
-                        LoadData();
-                    }
-                    else
-                    {
-                        throw new Exception(APICustomer.GetError(response));
-                    }
+                    var Cake = Task.Run(() => APICustomer.GetRequestData<CakeViewModel>("api/Cake/Get/" + id.Value)).Result;
+                    FCakeName.Text = Cake.CakeName;
+                    FCakePrice.Text = Cake.Price.ToString();
+                    CakeIngredients = Cake.CakeIngredients;
+                    LoadData();
                 }
                 catch (Exception ex)
                 {
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -150,59 +146,57 @@ namespace SweetShopView
                 MessageBox.Show("Заполните компоненты", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            try
+            List<CakeIngredientBindingModel> CakeIngredientBM = new List<CakeIngredientBindingModel>();
+            for (int i = 0; i < CakeIngredients.Count; ++i)
             {
-                List<CakeIngredientBindingModel> CakeIngredientBM = new List<CakeIngredientBindingModel>();
-                for (int i = 0; i < CakeIngredients.Count; ++i)
+                CakeIngredientBM.Add(new CakeIngredientBindingModel
                 {
-                    CakeIngredientBM.Add(new CakeIngredientBindingModel
-                    {
-                        Id = CakeIngredients[i].Id,
-                        CakeId = CakeIngredients[i].CakeId,
-                        IngredientId = CakeIngredients[i].IngredientId,
-                        Count = CakeIngredients[i].Count
-                    });
-                }
-                Task<HttpResponseMessage> response;
-                if (id.HasValue)
-                {
-                    response = APICustomer.PostRequest("api/Cake/UpdElement", new CakeBindingModel
-                    {
-                        Id = id.Value,
-                        CakeName = FCakeName.Text,
-                        Price = Convert.ToInt32(FCakePrice.Text),
-                        CakeIngredients = CakeIngredientBM
-                    });
-                }
-                else
-                {
-                    response = APICustomer.PostRequest("api/Cake/AddElement", new CakeBindingModel
-                    {
-                        CakeName = FCakeName.Text,
-                        Price = Convert.ToInt32(FCakePrice.Text),
-                        CakeIngredients = CakeIngredientBM
-                    });
-                }
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APICustomer.GetError(response));
-                }
+                    Id = CakeIngredients[i].Id,
+                    CakeId = CakeIngredients[i].CakeId,
+                    IngredientId = CakeIngredients[i].IngredientId,
+                    Count = CakeIngredients[i].Count
+                });
             }
-            catch (Exception ex)
+            string name = FCakeName.Text;
+            int price = Convert.ToInt32(FCakePrice.Text);
+            Task task;
+            if (id.HasValue)
             {
+                task = Task.Run(() => APICustomer.PostRequestData("api/Cake/UpdElement", new CakeBindingModel
+                {
+                    Id = id.Value,
+                    CakeName = name,
+                    Price = price,
+                    CakeIngredients = CakeIngredientBM
+                }));
+            }
+            else
+            {
+                task = Task.Run(() => APICustomer.PostRequestData("api/Cake/AddElement", new CakeBindingModel
+                {
+                    CakeName = name,
+                    Price = price,
+                    CakeIngredients = CakeIngredientBM
+                }));
+            }
+
+            task.ContinueWith((prevTask) => MessageBox.Show("Сохранение прошло успешно. Обновите список", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+            task.ContinueWith((prevTask) =>
+            {
+                var ex = (Exception)prevTask.Exception;
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            }, TaskContinuationOptions.OnlyOnFaulted);
+
+            Close();
         }
 
         private void FCakeCancel_Click(object sender, EventArgs e)
         {
-            DialogResult = DialogResult.Cancel;
             Close();
         }
     }

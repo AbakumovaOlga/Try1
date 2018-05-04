@@ -20,10 +20,7 @@ namespace SweetShopView
         {
             InitializeComponent();
         }
-        private void FormCustomerRequests_Load(object sender, EventArgs e)
-        {
 
-        }
         private void buttonForm_Click(object sender, EventArgs e)
         {
             if (dateTimePickerFrom.Value.Date >= dateTimePickerTo.Value.Date)
@@ -38,26 +35,23 @@ namespace SweetShopView
                                             " по " + dateTimePickerTo.Value.ToShortDateString());
                 reportViewer.LocalReport.SetParameters(parameter);
 
-                var response = APICustomer.PostRequest("api/Report/GetCustomerRequests", new ReportBindingModel
-                {
-                    DateFrom = dateTimePickerFrom.Value,
-                    DateTo = dateTimePickerTo.Value
-                });
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    var dataSource = APICustomer.GetElement<List<CustomerRequestsModel>>(response);
-                    ReportDataSource source = new ReportDataSource("DataSetRequests", dataSource);
-                    reportViewer.LocalReport.DataSources.Add(source);
-                }
-                else
-                {
-                    throw new Exception(APICustomer.GetError(response));
-                }
+                var dataSource = Task.Run(() => APICustomer.PostRequestData<ReportBindingModel, List<CustomerRequestsModel>>("api/Report/GetCustomerRequests",
+                    new ReportBindingModel
+                    {
+                        DateFrom = dateTimePickerFrom.Value,
+                        DateTo = dateTimePickerTo.Value
+                    })).Result;
+                ReportDataSource source = new ReportDataSource("DataSetRequests", dataSource);
+                reportViewer.LocalReport.DataSources.Add(source);
 
                 reportViewer.RefreshReport();
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -75,29 +69,31 @@ namespace SweetShopView
             };
             if (sfd.ShowDialog() == DialogResult.OK)
             {
-                try
+                string fileName = sfd.FileName;
+                Task task = Task.Run(() => APICustomer.PostRequestData("api/Report/SaveCustomerRequests", new ReportBindingModel
                 {
-                    var response = APICustomer.PostRequest("api/Report/SaveCustomerRequests", new ReportBindingModel
-                    {
-                        FileName = sfd.FileName,
-                        DateFrom = dateTimePickerFrom.Value,
-                        DateTo = dateTimePickerTo.Value
-                    });
-                    if (response.Result.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        throw new Exception(APICustomer.GetError(response));
-                    }
-                }
-                catch (Exception ex)
+                    FileName = fileName,
+                    DateFrom = dateTimePickerFrom.Value,
+                    DateTo = dateTimePickerTo.Value
+                }));
+
+                task.ContinueWith((prevTask) => MessageBox.Show("Список заказов сохранен", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+
+                task.ContinueWith((prevTask) =>
                 {
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                }, TaskContinuationOptions.OnlyOnFaulted);
             }
+        }
+        private void FormCustomerRequests_Load(object sender, EventArgs e)
+        {
+            this.reportViewer.RefreshReport();
         }
     }
 }
-

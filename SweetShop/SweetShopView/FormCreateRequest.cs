@@ -24,41 +24,30 @@ namespace SweetShopView
         {
             try
             {
-                var responseC = APICustomer.GetRequest("api/Customer/GetList");
-                if (responseC.Result.IsSuccessStatusCode)
+                List<CustomerViewModel> listC = Task.Run(() => APICustomer.GetRequestData<List<CustomerViewModel>>("api/Customer/GetList")).Result;
+                if (listC != null)
                 {
-                    List<CustomerViewModel> list = APICustomer.GetElement<List<CustomerViewModel>>(responseC);
-                    if (list != null)
-                    {
-                        FCRCustomer.DisplayMember = "CustomerFIO";
-                        FCRCustomer.ValueMember = "Id";
-                        FCRCustomer.DataSource = list;
-                        FCRCustomer.SelectedItem = null;
-                    }
+                    FCRCustomer.DisplayMember = "CustomerFIO";
+                    FCRCustomer.ValueMember = "Id";
+                    FCRCustomer.DataSource = listC;
+                    FCRCustomer.SelectedItem = null;
                 }
-                else
+
+                List<CakeViewModel> listP = Task.Run(() => APICustomer.GetRequestData<List<CakeViewModel>>("api/Cake/GetList")).Result;
+                if (listP != null)
                 {
-                    throw new Exception(APICustomer.GetError(responseC));
-                }
-                var responseP = APICustomer.GetRequest("api/Cake/GetList");
-                if (responseP.Result.IsSuccessStatusCode)
-                {
-                    List<CakeViewModel> list = APICustomer.GetElement<List<CakeViewModel>>(responseP);
-                    if (list != null)
-                    {
-                        FCRCake.DisplayMember = "CakeName";
-                        FCRCake.ValueMember = "Id";
-                        FCRCake.DataSource = list;
-                        FCRCake.SelectedItem = null;
-                    }
-                }
-                else
-                {
-                    throw new Exception(APICustomer.GetError(responseP));
+                    FCRCake.DisplayMember = "CakeName";
+                    FCRCake.ValueMember = "Id";
+                    FCRCake.DataSource = listP;
+                    FCRCake.SelectedItem = null;
                 }
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -70,20 +59,16 @@ namespace SweetShopView
                 try
                 {
                     int id = Convert.ToInt32(FCRCake.SelectedValue);
-                    var responseP = APICustomer.GetRequest("api/Cake/Get/" + id);
-                    if (responseP.Result.IsSuccessStatusCode)
-                    {
-                        CakeViewModel Cake = APICustomer.GetElement<CakeViewModel>(responseP);
-                        int count = Convert.ToInt32(FCRNumber.Text);
-                        FCRSum.Text = (count * (int)Cake.Price).ToString();
-                    }
-                    else
-                    {
-                        throw new Exception(APICustomer.GetError(responseP));
-                    }
+                    CakeViewModel Cake = Task.Run(() => APICustomer.GetRequestData<CakeViewModel>("api/Cake/Get/" + id)).Result;
+                    int count = Convert.ToInt32(FCRNumber.Text);
+                    FCRSum.Text = (count * (int)Cake.Price).ToString();
                 }
                 catch (Exception ex)
                 {
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -116,40 +101,37 @@ namespace SweetShopView
                 MessageBox.Show("Выберите изделие", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            try
+            int CustomerId = Convert.ToInt32(FCRCustomer.SelectedValue);
+            int CakeId = Convert.ToInt32(FCRCake.SelectedValue);
+            int count = Convert.ToInt32(FCRNumber.Text);
+            int sum = Convert.ToInt32(FCRSum.Text);
+            Task task = Task.Run(() => APICustomer.PostRequestData("api/Main/CreateRequest", new RequestBindingModel
             {
-                var response = APICustomer.PostRequest("api/Main/CreateRequest", new RequestBindingModel
-                {
-                    CustomerId = Convert.ToInt32(FCRCustomer.SelectedValue),
-                    CakeId = Convert.ToInt32(FCRCake.SelectedValue),
-                    Count = Convert.ToInt32(FCRNumber.Text),
-                    Sum = Convert.ToInt32(FCRSum.Text)
-                });
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APICustomer.GetError(response));
-                }
-            }
-            catch (Exception ex)
+                CustomerId = CustomerId,
+                CakeId = CakeId,
+                Count = count,
+                Sum = sum
+            }));
+
+            task.ContinueWith((prevTask) => MessageBox.Show("Сохранение прошло успешно. Обновите список", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information),
+                TaskContinuationOptions.OnlyOnRanToCompletion);
+            task.ContinueWith((prevTask) =>
             {
+                var ex = (Exception)prevTask.Exception;
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            }, TaskContinuationOptions.OnlyOnFaulted);
+
+            Close();
         }
 
         private void FCRCancel_Click(object sender, EventArgs e)
         {
-            DialogResult = DialogResult.Cancel;
             Close();
         }
-        private void FCRNumber_TextChanged_1(object sender, EventArgs e)
-        {
 
-        }
     }
 }

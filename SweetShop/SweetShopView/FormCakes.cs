@@ -30,24 +30,20 @@ namespace SweetShopView
         {
             try
             {
-                var response = APICustomer.GetRequest("api/Cake/GetList");
-                if (response.Result.IsSuccessStatusCode)
+                List<CakeViewModel> list = Task.Run(() => APICustomer.GetRequestData<List<CakeViewModel>>("api/Cake/GetList")).Result;
+                if (list != null)
                 {
-                    List<CakeViewModel> list = APICustomer.GetElement<List<CakeViewModel>>(response);
-                    if (list != null)
-                    {
-                        FCakeSList.DataSource = list;
-                        FCakeSList.Columns[0].Visible = false;
-                        FCakeSList.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                    }
-                }
-                else
-                {
-                    throw new Exception(APICustomer.GetError(response));
+                    FCakeSList.DataSource = list;
+                    FCakeSList.Columns[0].Visible = false;
+                    FCakeSList.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 }
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -55,22 +51,18 @@ namespace SweetShopView
         private void FCakeSAdd_Click(object sender, EventArgs e)
         {
             var form = new FormCake();
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                LoadData();
-            }
+            form.ShowDialog();
         }
 
         private void FCakeSUpd_Click(object sender, EventArgs e)
         {
             if (FCakeSList.SelectedRows.Count == 1)
             {
-                var form = new FormCake();
-                form.Id = Convert.ToInt32(FCakeSList.SelectedRows[0].Cells[0].Value);
-                if (form.ShowDialog() == DialogResult.OK)
+                var form = new FormCake
                 {
-                    LoadData();
-                }
+                    Id = Convert.ToInt32(FCakeSList.SelectedRows[0].Cells[0].Value)
+                };
+                form.ShowDialog();
             }
         }
 
@@ -81,19 +73,21 @@ namespace SweetShopView
                 if (MessageBox.Show("Удалить запись", "Вопрос", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
                     int id = Convert.ToInt32(FCakeSList.SelectedRows[0].Cells[0].Value);
-                    try
+
+                    Task task = Task.Run(() => APICustomer.PostRequestData("api/Cake/DelElement", new CustomerBindingModel { Id = id }));
+
+                    task.ContinueWith((prevTask) => MessageBox.Show("Запись удалена. Обновите список", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information),
+                    TaskContinuationOptions.OnlyOnRanToCompletion);
+
+                    task.ContinueWith((prevTask) =>
                     {
-                        var response = APICustomer.PostRequest("api/Cake/DelElement", new CustomerBindingModel { Id = id });
-                        if (!response.Result.IsSuccessStatusCode)
+                        var ex = (Exception)prevTask.Exception;
+                        while (ex.InnerException != null)
                         {
-                            throw new Exception(APICustomer.GetError(response));
+                            ex = ex.InnerException;
                         }
-                    }
-                    catch (Exception ex)
-                    {
                         MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                    LoadData();
+                    }, TaskContinuationOptions.OnlyOnFaulted);
                 }
             }
         }
@@ -102,7 +96,5 @@ namespace SweetShopView
         {
             LoadData();
         }
-
     }
 }
-

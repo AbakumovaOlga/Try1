@@ -23,41 +23,30 @@ namespace SweetShopView
         {
             try
             {
-                var responseC = APICustomer.GetRequest("api/Component/GetList");
-                if (responseC.Result.IsSuccessStatusCode)
+                List<IngredientViewModel> listC = Task.Run(() => APICustomer.GetRequestData<List<IngredientViewModel>>("api/Ingredient/GetList")).Result;
+                if (listC != null)
                 {
-                    List<IngredientViewModel> list = APICustomer.GetElement<List<IngredientViewModel>>(responseC);
-                    if (list != null)
-                    {
-                        FRFIngredient.DisplayMember = "ComponentName";
-                        FRFIngredient.ValueMember = "Id";
-                        FRFIngredient.DataSource = list;
-                        FRFIngredient.SelectedItem = null;
-                    }
+                    FRFIngredient.DisplayMember = "IngredientName";
+                    FRFIngredient.ValueMember = "Id";
+                    FRFIngredient.DataSource = listC;
+                    FRFIngredient.SelectedItem = null;
                 }
-                else
+
+                List<FridgeViewModel> listS = Task.Run(() => APICustomer.GetRequestData<List<FridgeViewModel>>("api/Fridge/GetList")).Result;
+                if (listS != null)
                 {
-                    throw new Exception(APICustomer.GetError(responseC));
-                }
-                var responseS = APICustomer.GetRequest("api/Stock/GetList");
-                if (responseS.Result.IsSuccessStatusCode)
-                {
-                    List<FridgeViewModel> list = APICustomer.GetElement<List<FridgeViewModel>>(responseS);
-                    if (list != null)
-                    {
-                        FRFFridge.DisplayMember = "StockName";
-                        FRFFridge.ValueMember = "Id";
-                        FRFFridge.DataSource = list;
-                        FRFFridge.SelectedItem = null;
-                    }
-                }
-                else
-                {
-                    throw new Exception(APICustomer.GetError(responseC));
+                    FRFFridge.DisplayMember = "FridgeName";
+                    FRFFridge.ValueMember = "Id";
+                    FRFFridge.DataSource = listS;
+                    FRFFridge.SelectedItem = null;
                 }
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -81,32 +70,42 @@ namespace SweetShopView
             }
             try
             {
-                var response = APICustomer.PostRequest("api/Main/PutComponentOnStock", new FridgeIngredientBindingModel
+                int IngredientId = Convert.ToInt32(FRFIngredient.SelectedValue);
+                int FridgeId = Convert.ToInt32(FRFFridge.SelectedValue);
+                int count = Convert.ToInt32(FRFNumber.Text);
+                Task task = Task.Run(() => APICustomer.PostRequestData("api/Main/PutIngredientOnFridge", new FridgeIngredientBindingModel
                 {
-                    IngredientId = Convert.ToInt32(FRFIngredient.SelectedValue),
-                    FridgeId = Convert.ToInt32(FRFFridge.SelectedValue),
-                    Count = Convert.ToInt32(FRFNumber.Text)
-                });
-                if (response.Result.IsSuccessStatusCode)
+                    IngredientId = IngredientId,
+                    FridgeId = FridgeId,
+                    Count = count
+                }));
+
+                task.ContinueWith((prevTask) => MessageBox.Show("Склад пополнен", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information),
+                    TaskContinuationOptions.OnlyOnRanToCompletion);
+                task.ContinueWith((prevTask) =>
                 {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APICustomer.GetError(response));
-                }
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }, TaskContinuationOptions.OnlyOnFaulted);
+
+                Close();
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void FRFCancel_Click(object sender, EventArgs e)
         {
-            DialogResult = DialogResult.Cancel;
             Close();
         }
     }

@@ -33,25 +33,21 @@ namespace SweetShopView
                     MessageBox.Show("Не указан заказ", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Close();
                 }
-                var response = APICustomer.GetRequest("api/Baker/GetList");
-                if (response.Result.IsSuccessStatusCode)
+                List<BakerViewModel> list = Task.Run(() => APICustomer.GetRequestData<List<BakerViewModel>>("api/Baker/GetList")).Result;
+                if (list != null)
                 {
-                    List<BakerViewModel> list = APICustomer.GetElement<List<BakerViewModel>>(response);
-                    if (list != null)
-                    {
-                        FTRBaker.DisplayMember = "BakerFIO";
-                        FTRBaker.ValueMember = "Id";
-                        FTRBaker.DataSource = list;
-                        FTRBaker.SelectedItem = null;
-                    }
-                }
-                else
-                {
-                    throw new Exception(APICustomer.GetError(response));
+                    FTRBaker.DisplayMember = "BakerFIO";
+                    FTRBaker.ValueMember = "Id";
+                    FTRBaker.DataSource = list;
+                    FTRBaker.SelectedItem = null;
                 }
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -65,27 +61,37 @@ namespace SweetShopView
             }
             try
             {
-                var response = APICustomer.PostRequest("api/Main/TakeOrderInWork", new RequestBindingModel
+                int BakerId = Convert.ToInt32(FTRBaker.SelectedValue);
+                Task task = Task.Run(() => APICustomer.PostRequestData("api/Main/TakeRequestInWork", new RequestBindingModel
                 {
                     Id = id.Value,
-                    BakerId = Convert.ToInt32(FTRBaker.SelectedValue)
-                });
-                if (response.Result.IsSuccessStatusCode)
+                    BakerId = BakerId
+                }));
+
+                task.ContinueWith((prevTask) => MessageBox.Show("Заказ передан в работу. Обновите список", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information),
+                    TaskContinuationOptions.OnlyOnRanToCompletion);
+                task.ContinueWith((prevTask) =>
                 {
-                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    throw new Exception(APICustomer.GetError(response));
-                }
+                    var ex = (Exception)prevTask.Exception;
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                    }
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }, TaskContinuationOptions.OnlyOnFaulted);
+
+                Close();
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
         private void FTRCancel_Click(object sender, EventArgs e)
         {

@@ -22,25 +22,21 @@ namespace SweetShopView
             InitializeComponent();
         }
 
-        private void FormProductComponent_Load(object sender, EventArgs e)
+        private void FormCakeIngredient_Load(object sender, EventArgs e)
         {
             try
             {
-                var response = APICustomer.GetRequest("api/Component/GetList");
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    comboBox1.DisplayMember = "ComponentName";
-                    comboBox1.ValueMember = "Id";
-                    comboBox1.DataSource = APICustomer.GetElement<List<IngredientViewModel>>(response);
-                    comboBox1.SelectedItem = null;
-                }
-                else
-                {
-                    throw new Exception(APICustomer.GetError(response));
-                }
+                comboBox1.DisplayMember = "IngredientName";
+                comboBox1.ValueMember = "Id";
+                comboBox1.DataSource = Task.Run(() => APICustomer.GetRequestData<List<IngredientViewModel>>("api/Ingredient/GetList")).Result;
+                comboBox1.SelectedItem = null;
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             if (model != null)
@@ -93,9 +89,6 @@ namespace SweetShopView
             DialogResult = DialogResult.Cancel;
             Close();
         }
-        private void FormCakeIngredient_Load(object sender, EventArgs e)
-        {
 
-        }
     }
 }
