@@ -7,35 +7,51 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace SweetShopView
 {
     public partial class FormFridge : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly IFridgeService service;
 
         private int? id;
 
-        public FormFridge(IFridgeService service)
+        public FormFridge()
         {
             InitializeComponent();
-            this.service = service;
         }
 
-        private void FFrCancel_Click(object sender, EventArgs e)
+        private void FormFridge_Load(object sender, EventArgs e)
         {
-            DialogResult = DialogResult.Cancel;
-            Close();
+            if (id.HasValue)
+            {
+                try
+                {
+                    var response = APICustomer.GetRequest("api/Fridge/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        var Fridge = APICustomer.GetElement<FridgeViewModel>(response);
+                        FFrName.Text = Fridge.FridgeName;
+                        dataGridView.DataSource = Fridge.FridgeIngredients;
+                        dataGridView.Columns[0].Visible = false;
+                        dataGridView.Columns[1].Visible = false;
+                        dataGridView.Columns[2].Visible = false;
+                        dataGridView.Columns[3].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    }
+                    else
+                    {
+                        throw new Exception(APICustomer.GetError(response));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
 
         private void FFrSave_Click(object sender, EventArgs e)
@@ -47,9 +63,10 @@ namespace SweetShopView
             }
             try
             {
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new FridgeBindingModel
+                    response = APICustomer.PostRequest("api/Fridge/UpdElement", new FridgeBindingModel
                     {
                         Id = id.Value,
                         FridgeName = FFrName.Text
@@ -57,14 +74,21 @@ namespace SweetShopView
                 }
                 else
                 {
-                    service.AddElement(new FridgeBindingModel
+                    response = APICustomer.PostRequest("api/Fridge/AddElement", new FridgeBindingModel
                     {
                         FridgeName = FFrName.Text
                     });
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                DialogResult = DialogResult.OK;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    DialogResult = DialogResult.OK;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
             }
             catch (Exception ex)
             {
@@ -72,28 +96,15 @@ namespace SweetShopView
             }
         }
 
+        private void FFrCancel_Click(object sender, EventArgs e)
+        {
+            DialogResult = DialogResult.Cancel;
+            Close();
+        }
+
         private void FFrName_TextChanged(object sender, EventArgs e)
         {
 
-        }
-
-        private void FormFridge_Load(object sender, EventArgs e)
-        {
-            if (id.HasValue)
-            {
-                try
-                {
-                    FridgeViewModel view = service.GetElement(id.Value);
-                    if (view != null)
-                    {
-                        FFrName.Text = view.FridgeName;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
         }
     }
 }

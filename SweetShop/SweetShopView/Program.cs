@@ -8,8 +8,6 @@ using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Unity;
-using Unity.Lifetime;
 
 namespace SweetShopView
 {
@@ -21,31 +19,10 @@ namespace SweetShopView
         [STAThread]
         static void Main()
         {
-            var container = BuildUnityContainer();
+            APICustomer.Connect();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(container.Resolve<FormMain>());
-        }
-        public static IUnityContainer BuildUnityContainer()
-        {
-            var currentContainer = new UnityContainer();
-            /* currentContainer.RegisterType<ICustomerService, CustomerServiceList>(new HierarchicalLifetimeManager());
-             currentContainer.RegisterType<IIngredientService, IngredientServiceList>(new HierarchicalLifetimeManager());
-             currentContainer.RegisterType<IBakerService, BakerServiceList>(new HierarchicalLifetimeManager());
-             currentContainer.RegisterType<ICakeService, CakeServiceList>(new HierarchicalLifetimeManager());
-             currentContainer.RegisterType<IFridgeService, FridgeServiceList>(new HierarchicalLifetimeManager());
-             currentContainer.RegisterType<IMainService, MainServiceList>(new HierarchicalLifetimeManager());
-             */
-            currentContainer.RegisterType<DbContext, AbstractDbContext>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<ICustomerService, CustomerServiceBD>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<IIngredientService, IngredientServiceBD>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<IBakerService, BakerServiceBD>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<ICakeService, CakeServiceBD>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<IFridgeService, FridgeServiceBD>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<IMainService, MainServiceBD>(new HierarchicalLifetimeManager());
-            currentContainer.RegisterType<IReportService, ReportServiceBD>(new HierarchicalLifetimeManager());
-
-            return currentContainer;
+            Application.Run(new FormMain());
         }
     }
 }

@@ -6,8 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Unity.Attributes;
-using Unity;
 using SweetShopService.Interfaces;
 using SweetShopService.ViewModels;
 using SweetShopService.BindingModels;
@@ -16,42 +14,46 @@ namespace SweetShopView
 {
     public partial class FormReplenishFridge : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IFridgeService serviceF;
-
-        private readonly IIngredientService serviceI;
-
-        private readonly IMainService serviceM;
-
-        public FormReplenishFridge(IFridgeService serviceF, IIngredientService serviceI, IMainService serviceM)
+        public FormReplenishFridge()
         {
             InitializeComponent();
-            this.serviceF = serviceF;
-            this.serviceI = serviceI;
-            this.serviceM = serviceM;
         }
 
         private void FormReplenishFridge_Load(object sender, EventArgs e)
         {
             try
             {
-                List<IngredientViewModel> listC = serviceI.GetList();
-                if (listC != null)
+                var responseC = APICustomer.GetRequest("api/Component/GetList");
+                if (responseC.Result.IsSuccessStatusCode)
                 {
-                    FRFIngredient.DisplayMember = "IngredientName";
-                    FRFIngredient.ValueMember = "Id";
-                    FRFIngredient.DataSource = listC;
-                    FRFIngredient.SelectedItem = null;
+                    List<IngredientViewModel> list = APICustomer.GetElement<List<IngredientViewModel>>(responseC);
+                    if (list != null)
+                    {
+                        FRFIngredient.DisplayMember = "ComponentName";
+                        FRFIngredient.ValueMember = "Id";
+                        FRFIngredient.DataSource = list;
+                        FRFIngredient.SelectedItem = null;
+                    }
                 }
-                List<FridgeViewModel> listS = serviceF.GetList();
-                if (listS != null)
+                else
                 {
-                    FRFFridge.DisplayMember = "FridgeName";
-                    FRFFridge.ValueMember = "Id";
-                    FRFFridge.DataSource = listS;
-                    FRFFridge.SelectedItem = null;
+                    throw new Exception(APICustomer.GetError(responseC));
+                }
+                var responseS = APICustomer.GetRequest("api/Stock/GetList");
+                if (responseS.Result.IsSuccessStatusCode)
+                {
+                    List<FridgeViewModel> list = APICustomer.GetElement<List<FridgeViewModel>>(responseS);
+                    if (list != null)
+                    {
+                        FRFFridge.DisplayMember = "StockName";
+                        FRFFridge.ValueMember = "Id";
+                        FRFFridge.DataSource = list;
+                        FRFFridge.SelectedItem = null;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(responseC));
                 }
             }
             catch (Exception ex)
@@ -79,15 +81,22 @@ namespace SweetShopView
             }
             try
             {
-                serviceM.PutIngredientOnFridge(new FridgeIngredientBindingModel
+                var response = APICustomer.PostRequest("api/Main/PutComponentOnStock", new FridgeIngredientBindingModel
                 {
                     IngredientId = Convert.ToInt32(FRFIngredient.SelectedValue),
                     FridgeId = Convert.ToInt32(FRFFridge.SelectedValue),
                     Count = Convert.ToInt32(FRFNumber.Text)
                 });
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                DialogResult = DialogResult.OK;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    DialogResult = DialogResult.OK;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
             }
             catch (Exception ex)
             {

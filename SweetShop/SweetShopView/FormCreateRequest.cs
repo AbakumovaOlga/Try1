@@ -10,49 +10,51 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace SweetShopView
 {
     public partial class FormCreateRequest : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly ICustomerService serviceC;
-
-        private readonly ICakeService serviceCake;
-
-        private readonly IMainService serviceM;
-
-        public FormCreateRequest(ICustomerService serviceC, ICakeService serviceCake, IMainService serviceM)
+        public FormCreateRequest()
         {
             InitializeComponent();
-            this.serviceC = serviceC;
-            this.serviceCake = serviceCake;
-            this.serviceM = serviceM;
         }
 
         private void FormCreateRequest_Load(object sender, EventArgs e)
         {
             try
             {
-                List<CustomerViewModel> listC = serviceC.GetList();
-                if (listC != null)
+                var responseC = APICustomer.GetRequest("api/Customer/GetList");
+                if (responseC.Result.IsSuccessStatusCode)
                 {
-                    FCRCustomer.DisplayMember = "CustomerFIO";
-                    FCRCustomer.ValueMember = "Id";
-                    FCRCustomer.DataSource = listC;
-                    FCRCustomer.SelectedItem = null;
+                    List<CustomerViewModel> list = APICustomer.GetElement<List<CustomerViewModel>>(responseC);
+                    if (list != null)
+                    {
+                        FCRCustomer.DisplayMember = "CustomerFIO";
+                        FCRCustomer.ValueMember = "Id";
+                        FCRCustomer.DataSource = list;
+                        FCRCustomer.SelectedItem = null;
+                    }
                 }
-                List<CakeViewModel> listP = serviceCake.GetList();
-                if (listP != null)
+                else
                 {
-                    FCRCake.DisplayMember = "CakeName";
-                    FCRCake.ValueMember = "Id";
-                    FCRCake.DataSource = listP;
-                    FCRCake.SelectedItem = null;
+                    throw new Exception(APICustomer.GetError(responseC));
+                }
+                var responseP = APICustomer.GetRequest("api/Cake/GetList");
+                if (responseP.Result.IsSuccessStatusCode)
+                {
+                    List<CakeViewModel> list = APICustomer.GetElement<List<CakeViewModel>>(responseP);
+                    if (list != null)
+                    {
+                        FCRCake.DisplayMember = "CakeName";
+                        FCRCake.ValueMember = "Id";
+                        FCRCake.DataSource = list;
+                        FCRCake.SelectedItem = null;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(responseP));
                 }
             }
             catch (Exception ex)
@@ -60,6 +62,7 @@ namespace SweetShopView
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
         private void CalcSum()
         {
             if (FCRCake.SelectedValue != null && !string.IsNullOrEmpty(FCRNumber.Text))
@@ -67,9 +70,17 @@ namespace SweetShopView
                 try
                 {
                     int id = Convert.ToInt32(FCRCake.SelectedValue);
-                    CakeViewModel Cake = serviceCake.GetElement(id);
-                    int Number = Convert.ToInt32(FCRNumber.Text);
-                    FCRSum.Text = (Number * (int)Cake.Price).ToString();
+                    var responseP = APICustomer.GetRequest("api/Cake/Get/" + id);
+                    if (responseP.Result.IsSuccessStatusCode)
+                    {
+                        CakeViewModel Cake = APICustomer.GetElement<CakeViewModel>(responseP);
+                        int count = Convert.ToInt32(FCRNumber.Text);
+                        FCRSum.Text = (count * (int)Cake.Price).ToString();
+                    }
+                    else
+                    {
+                        throw new Exception(APICustomer.GetError(responseP));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -107,16 +118,23 @@ namespace SweetShopView
             }
             try
             {
-                serviceM.CreateRequest(new RequestBindingModel
+                var response = APICustomer.PostRequest("api/Main/CreateRequest", new RequestBindingModel
                 {
                     CustomerId = Convert.ToInt32(FCRCustomer.SelectedValue),
                     CakeId = Convert.ToInt32(FCRCake.SelectedValue),
                     Count = Convert.ToInt32(FCRNumber.Text),
                     Sum = Convert.ToInt32(FCRSum.Text)
                 });
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                DialogResult = DialogResult.OK;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    DialogResult = DialogResult.OK;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
             }
             catch (Exception ex)
             {
@@ -129,7 +147,6 @@ namespace SweetShopView
             DialogResult = DialogResult.Cancel;
             Close();
         }
-
         private void FCRNumber_TextChanged_1(object sender, EventArgs e)
         {
 

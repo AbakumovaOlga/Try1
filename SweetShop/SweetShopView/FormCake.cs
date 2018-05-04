@@ -7,31 +7,24 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace SweetShopView
 {
     public partial class FormCake : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly ICakeService service;
 
         private int? id;
 
         private List<CakeIngredientViewModel> CakeIngredients;
 
-        public FormCake(ICakeService service)
+        public FormCake()
         {
             InitializeComponent();
-            this.service = service;
         }
 
         private void FormCake_Load(object sender, EventArgs e)
@@ -40,13 +33,18 @@ namespace SweetShopView
             {
                 try
                 {
-                    CakeViewModel view = service.GetElement(id.Value);
-                    if (view != null)
+                    var response = APICustomer.GetRequest("api/Cake/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
                     {
-                        FCakeName.Text = view.CakeName;
-                        FCakePrice.Text = view.Price.ToString();
-                        CakeIngredients = view.CakeIngredients;
+                        var Cake = APICustomer.GetElement<CakeViewModel>(response);
+                        FCakeName.Text = Cake.CakeName;
+                        FCakePrice.Text = Cake.Price.ToString();
+                        CakeIngredients = Cake.CakeIngredients;
                         LoadData();
+                    }
+                    else
+                    {
+                        throw new Exception(APICustomer.GetError(response));
                     }
                 }
                 catch (Exception ex)
@@ -82,7 +80,7 @@ namespace SweetShopView
 
         private void FCakeAdd_Click(object sender, EventArgs e)
         {
-            var form = Container.Resolve<FormCakeIngredient>();
+            var form = new FormCakeIngredient();
             if (form.ShowDialog() == DialogResult.OK)
             {
                 if (form.Model != null)
@@ -101,7 +99,7 @@ namespace SweetShopView
         {
             if (FCList.SelectedRows.Count == 1)
             {
-                var form = Container.Resolve<FormCakeIngredient>();
+                var form = new FormCakeIngredient();
                 form.Model = CakeIngredients[FCList.SelectedRows[0].Cells[0].RowIndex];
                 if (form.ShowDialog() == DialogResult.OK)
                 {
@@ -165,9 +163,10 @@ namespace SweetShopView
                         Count = CakeIngredients[i].Count
                     });
                 }
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new CakeBindingModel
+                    response = APICustomer.PostRequest("api/Cake/UpdElement", new CakeBindingModel
                     {
                         Id = id.Value,
                         CakeName = FCakeName.Text,
@@ -177,16 +176,23 @@ namespace SweetShopView
                 }
                 else
                 {
-                    service.AddElement(new CakeBindingModel
+                    response = APICustomer.PostRequest("api/Cake/AddElement", new CakeBindingModel
                     {
                         CakeName = FCakeName.Text,
                         Price = Convert.ToInt32(FCakePrice.Text),
                         CakeIngredients = CakeIngredientBM
                     });
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                DialogResult = DialogResult.OK;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    DialogResult = DialogResult.OK;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
             }
             catch (Exception ex)
             {

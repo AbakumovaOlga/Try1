@@ -1,6 +1,7 @@
 ﻿using Microsoft.Reporting.WinForms;
 using SweetShopService.BindingModels;
 using SweetShopService.Interfaces;
+using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,29 +11,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Unity;
-using Unity.Attributes;
 
 namespace SweetShopView
 {
     public partial class FormCustomerRequests : Form
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IReportService service;
-
-        public FormCustomerRequests(IReportService service)
+        public FormCustomerRequests()
         {
             InitializeComponent();
-            this.service = service;
         }
-
         private void FormCustomerRequests_Load(object sender, EventArgs e)
         {
-            this.reportViewer.RefreshReport();
-        }
 
+        }
         private void buttonForm_Click(object sender, EventArgs e)
         {
             if (dateTimePickerFrom.Value.Date >= dateTimePickerTo.Value.Date)
@@ -47,13 +38,21 @@ namespace SweetShopView
                                             " по " + dateTimePickerTo.Value.ToShortDateString());
                 reportViewer.LocalReport.SetParameters(parameter);
 
-                var dataSource = service.GetCustomerRequests(new ReportBindingModel
+                var response = APICustomer.PostRequest("api/Report/GetCustomerRequests", new ReportBindingModel
                 {
                     DateFrom = dateTimePickerFrom.Value,
                     DateTo = dateTimePickerTo.Value
                 });
-                ReportDataSource source = new ReportDataSource("DataSetRequests", dataSource);
-                reportViewer.LocalReport.DataSources.Add(source);
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    var dataSource = APICustomer.GetElement<List<CustomerRequestsModel>>(response);
+                    ReportDataSource source = new ReportDataSource("DataSetRequests", dataSource);
+                    reportViewer.LocalReport.DataSources.Add(source);
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
 
                 reportViewer.RefreshReport();
             }
@@ -78,13 +77,20 @@ namespace SweetShopView
             {
                 try
                 {
-                    service.SaveCustomerRequests(new ReportBindingModel
+                    var response = APICustomer.PostRequest("api/Report/SaveCustomerRequests", new ReportBindingModel
                     {
                         FileName = sfd.FileName,
                         DateFrom = dateTimePickerFrom.Value,
                         DateTo = dateTimePickerTo.Value
                     });
-                    MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Выполнено", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        throw new Exception(APICustomer.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -94,3 +100,4 @@ namespace SweetShopView
         }
     }
 }
+
