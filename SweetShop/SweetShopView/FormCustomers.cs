@@ -60,7 +60,7 @@ namespace SweetShopView
                 var form = new FormCustomer
                 {
                     Id = Convert.ToInt32(FCusSList.SelectedRows[0].Cells[0].Value)
-                };
+            };
                 form.ShowDialog();
             }
         }

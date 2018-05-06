@@ -28,11 +28,25 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.Label label2;
             this.label1 = new System.Windows.Forms.Label();
             this.FCusFIO = new System.Windows.Forms.TextBox();
             this.FCusSave = new System.Windows.Forms.Button();
             this.FCusCancel = new System.Windows.Forms.Button();
+            this.FCusMail = new System.Windows.Forms.TextBox();
+            this.dataGridView1 = new System.Windows.Forms.DataGridView();
+            label2 = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new System.Drawing.Point(554, 56);
+            label2.Name = "label2";
+            label2.Size = new System.Drawing.Size(37, 20);
+            label2.TabIndex = 4;
+            label2.Text = "Mail";
             // 
             // label1
             // 
@@ -54,7 +68,7 @@
             // 
             // FCusSave
             // 
-            this.FCusSave.Location = new System.Drawing.Point(177, 131);
+            this.FCusSave.Location = new System.Drawing.Point(644, 610);
             this.FCusSave.Name = "FCusSave";
             this.FCusSave.Size = new System.Drawing.Size(122, 38);
             this.FCusSave.TabIndex = 2;
@@ -64,7 +78,7 @@
             // 
             // FCusCancel
             // 
-            this.FCusCancel.Location = new System.Drawing.Point(332, 131);
+            this.FCusCancel.Location = new System.Drawing.Point(799, 610);
             this.FCusCancel.Name = "FCusCancel";
             this.FCusCancel.Size = new System.Drawing.Size(122, 38);
             this.FCusCancel.TabIndex = 3;
@@ -72,11 +86,31 @@
             this.FCusCancel.UseVisualStyleBackColor = true;
             this.FCusCancel.Click += new System.EventHandler(this.FCusCancel_Click);
             // 
+            // FCusMail
+            // 
+            this.FCusMail.Location = new System.Drawing.Point(647, 56);
+            this.FCusMail.Name = "FCusMail";
+            this.FCusMail.Size = new System.Drawing.Size(329, 26);
+            this.FCusMail.TabIndex = 5;
+            this.FCusMail.TextChanged += new System.EventHandler(this.FCusMail_TextChanged);
+            // 
+            // dataGridView1
+            // 
+            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView1.Location = new System.Drawing.Point(96, 117);
+            this.dataGridView1.Name = "dataGridView1";
+            this.dataGridView1.RowTemplate.Height = 28;
+            this.dataGridView1.Size = new System.Drawing.Size(972, 474);
+            this.dataGridView1.TabIndex = 6;
+            // 
             // FormCustomer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(547, 199);
+            this.ClientSize = new System.Drawing.Size(1567, 660);
+            this.Controls.Add(this.dataGridView1);
+            this.Controls.Add(this.FCusMail);
+            this.Controls.Add(label2);
             this.Controls.Add(this.FCusCancel);
             this.Controls.Add(this.FCusSave);
             this.Controls.Add(this.FCusFIO);
@@ -84,6 +118,7 @@
             this.Name = "FormCustomer";
             this.Text = "Customer";
             this.Load += new System.EventHandler(this.FormCustomer_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -95,5 +130,7 @@
         private System.Windows.Forms.TextBox FCusFIO;
         private System.Windows.Forms.Button FCusSave;
         private System.Windows.Forms.Button FCusCancel;
+        private System.Windows.Forms.TextBox FCusMail;
+        private System.Windows.Forms.DataGridView dataGridView1;
     }
 }

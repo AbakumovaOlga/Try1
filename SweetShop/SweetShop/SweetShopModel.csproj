@@ -54,6 +54,7 @@
     <Compile Include="Fridge.cs" />
     <Compile Include="FridgeIngredient.cs" />
     <Compile Include="Ingredient.cs" />
+    <Compile Include="MessageInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Request.cs" />
     <Compile Include="RequestStatus.cs" />

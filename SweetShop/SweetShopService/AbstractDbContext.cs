@@ -36,6 +36,8 @@ namespace SweetShopService
 
         public virtual DbSet<FridgeIngredient> FridgeIngredients { get; set; }
 
+        public virtual DbSet<MessageInfo> MessageInfos { get; set; }
+
         public override int SaveChanges()
         {
             try

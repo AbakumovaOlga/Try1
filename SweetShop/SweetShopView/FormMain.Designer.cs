@@ -46,6 +46,7 @@
             this.FMFinish = new System.Windows.Forms.Button();
             this.FMPay = new System.Windows.Forms.Button();
             this.FMRel = new System.Windows.Forms.Button();
+            this.mailToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.FMList)).BeginInit();
             this.SuspendLayout();
@@ -56,7 +57,8 @@
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.catalogsToolStripMenuItem,
             this.replenishFridgeToolStripMenuItem,
-            this.rreportsToolStripMenuItem});
+            this.rreportsToolStripMenuItem,
+            this.mailToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(1413, 33);
@@ -208,6 +210,13 @@
             this.FMRel.UseVisualStyleBackColor = true;
             this.FMRel.Click += new System.EventHandler(this.FMRel_Click);
             // 
+            // mailToolStripMenuItem
+            // 
+            this.mailToolStripMenuItem.Name = "mailToolStripMenuItem";
+            this.mailToolStripMenuItem.Size = new System.Drawing.Size(57, 29);
+            this.mailToolStripMenuItem.Text = "Mail";
+            this.mailToolStripMenuItem.Click += new System.EventHandler(this.mailToolStripMenuItem_Click);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
@@ -252,6 +261,7 @@
         private System.Windows.Forms.ToolStripMenuItem priceCakesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem fullnessOfFridgesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem customersRequestsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem mailToolStripMenuItem;
     }
 }
 

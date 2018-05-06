@@ -54,9 +54,9 @@ namespace SweetShopRestApi.Controllers
         }
 
         [HttpPost]
-        public void PutComponentOnStock(FridgeIngredientBindingModel model)
+        public void ReplenishFridge(FridgeIngredientBindingModel model)
         {
-            _service.PutIngredientOnFridge(model);
+            _service.ReplenishFridge(model);
         }
     }
 }

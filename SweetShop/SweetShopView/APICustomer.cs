@@ -12,24 +12,24 @@ namespace SweetShopView
 {
     public static class APICustomer
     {
-        private static HttpClient customer = new HttpClient();
+        private static HttpClient client = new HttpClient();
 
         public static void Connect()
         {
-            customer.BaseAddress = new Uri(ConfigurationManager.AppSettings["IPAddress"]);
-            customer.DefaultRequestHeaders.Accept.Clear();
-            customer.DefaultRequestHeaders.Accept.Add(
+            client.BaseAddress = new Uri(ConfigurationManager.AppSettings["IPAddress"]);
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         private static async Task<HttpResponseMessage> GetRequest(string requestUrl)
         {
-            return await customer.GetAsync(requestUrl);
+            return await client.GetAsync(requestUrl);
         }
 
         private static async Task<HttpResponseMessage> PostRequest<T>(string requestUrl, T model)
         {
-            return await customer.PostAsJsonAsync(requestUrl, model);
+            return await client.PostAsJsonAsync(requestUrl, model);
         }
 
         public static async Task<T> GetRequestData<T>(string requestUrl)
