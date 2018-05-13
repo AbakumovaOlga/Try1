@@ -30,10 +30,6 @@ namespace SweetShopView
             this.service = service;
         }
 
-        private void FormCakeIngregient_Load(object sender, EventArgs e)
-        {
-
-        }
         private void FCISave_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(FCINumber.Text))
@@ -101,11 +97,6 @@ namespace SweetShopView
                 comboBox1.SelectedValue = model.IngredientId;
                 FCINumber.Text = model.Count.ToString();
             }
-        }
-
-        private void FCIIngr_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
         }
     }
 }

@@ -49,11 +49,6 @@ namespace SweetShopView
             }
         }
 
-        private void FBakSList_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-
-        }
-
         private void FBakSAdd_Click(object sender, EventArgs e)
         {
             var form = Container.Resolve<FormBaker>();
