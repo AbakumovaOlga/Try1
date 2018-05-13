@@ -76,7 +76,7 @@ namespace SweetShopService.ImplementationsList
         public void UpdElement(BakerBindingModel model)
         {
             Baker element = source.Bakers.FirstOrDefault(rec =>
- rec.BakerFIO == model.BakerFIO && rec.Id != model.Id);
+            rec.BakerFIO == model.BakerFIO && rec.Id != model.Id);
             if (element != null)
             {
                 throw new Exception("Уже есть сотрудник с таким ФИО");

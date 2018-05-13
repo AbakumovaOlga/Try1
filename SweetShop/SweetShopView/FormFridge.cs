@@ -72,11 +72,6 @@ namespace SweetShopView
             }
         }
 
-        private void FFrName_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
         private void FormFridge_Load(object sender, EventArgs e)
         {
             if (id.HasValue)

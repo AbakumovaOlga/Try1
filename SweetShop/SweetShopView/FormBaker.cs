@@ -32,11 +32,6 @@ namespace SweetShopView
             this.service = service;
         }
 
-        private void FBakFIO_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
         private void FormBaker_Load(object sender, EventArgs e)
         {
             if (id.HasValue)
