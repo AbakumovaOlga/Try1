@@ -37,104 +37,68 @@ namespace SweetShopService.ImplementationsList
 
         public void DelElement(int id)
         {
-            // при удалении удаляем все записи о компонентах на удаляемом складе
-            for (int i = 0; i < source.FridgeIngredients.Count; ++i)
+            Fridge element = source.Fridges.FirstOrDefault(rec => rec.Id == id);
+            if (element != null)
             {
-                if (source.FridgeIngredients[i].FridgeId == id)
-                {
-                    source.FridgeIngredients.RemoveAt(i--);
-                }
+                // при удалении удаляем все записи о компонентах на удаляемом складе
+                source.FridgeIngredients.RemoveAll(rec => rec.FridgeId == id);
+                source.Fridges.Remove(element);
             }
-            for (int i = 0; i < source.Fridges.Count; ++i)
+            else
             {
-                if (source.Fridges[i].Id == id)
-                {
-                    source.Fridges.RemoveAt(i);
-                    return;
-                }
+                throw new Exception("Элемент не найден");
             }
-            throw new Exception("Элемент не найден");
+
         }
 
         public FridgeViewModel GetElement(int id)
         {
-            for (int i = 0; i < source.Fridges.Count; ++i)
+            Fridge element = source.Fridges.FirstOrDefault(rec => rec.Id == id);
+            if (element != null)
             {
-                // требуется дополнительно получить список компонентов на складе и их количество
-                List<FridgeIngredientViewModel> FridgeIngredients = new List<FridgeIngredientViewModel>();
-                for (int j = 0; j < source.FridgeIngredients.Count; ++j)
+                return new FridgeViewModel
                 {
-                    if (source.FridgeIngredients[j].FridgeId == source.Fridges[i].Id)
-                    {
-                        string IngredientName = string.Empty;
-                        for (int k = 0; k < source.Ingredients.Count; ++k)
-                        {
-                            if (source.CakeIngredients[j].IngredientId == source.Ingredients[k].Id)
-                            {
-                                IngredientName = source.Ingredients[k].IngredientName;
-                                break;
-                            }
-                        }
-                        FridgeIngredients.Add(new FridgeIngredientViewModel
-                        {
-                            Id = source.FridgeIngredients[j].Id,
-                            FridgeId = source.FridgeIngredients[j].FridgeId,
-                            IngredientId = source.FridgeIngredients[j].IngredientId,
-                            IngredientName = IngredientName,
-                            Count = source.FridgeIngredients[j].Count
-                        });
-                    }
-                }
-                if (source.Fridges[i].Id == id)
-                {
-                    return new FridgeViewModel
-                    {
-                        Id = source.Fridges[i].Id,
-                        FridgeName = source.Fridges[i].FridgeName,
-                        FridgeIngredients = FridgeIngredients
-                    };
-                }
+                    Id = element.Id,
+                    FridgeName = element.FridgeName,
+                    FridgeIngredients = source.FridgeIngredients
+                            .Where(recPC => recPC.FridgeId == element.Id)
+                             .Select(recPC => new FridgeIngredientViewModel
+                             {
+                                 Id = recPC.Id,
+                                 FridgeId = recPC.FridgeId,
+                                 IngredientId = recPC.IngredientId,
+                                 IngredientName = source.Ingredients
+                                     .FirstOrDefault(recC => recC.Id == recPC.IngredientId)?.IngredientName,
+                                 Count = recPC.Count
+                             })
+                             .ToList()
+                };
             }
             throw new Exception("Холодильник не найден");
         }
 
         public List<FridgeViewModel> GetList()
         {
-            List<FridgeViewModel> result = new List<FridgeViewModel>();
-            for (int i = 0; i < source.Fridges.Count; ++i)
-            {
-                // требуется дополнительно получить список компонентов на складе и их количество
-                List<FridgeIngredientViewModel> FridgeIngredients = new List<FridgeIngredientViewModel>();
-                for (int j = 0; j < source.FridgeIngredients.Count; ++j)
+            List<FridgeViewModel> result = source.Fridges
+                .Select(rec => new FridgeViewModel
                 {
-                    if (source.FridgeIngredients[j].FridgeId == source.Fridges[i].Id)
-                    {
-                        string IngredientName = string.Empty;
-                        for (int k = 0; k < source.Ingredients.Count; ++k)
-                        {
-                            if (source.CakeIngredients[j].IngredientId == source.Ingredients[k].Id)
-                            {
-                                IngredientName = source.Ingredients[k].IngredientName;
-                                break;
-                            }
-                        }
-                        FridgeIngredients.Add(new FridgeIngredientViewModel
-                        {
-                            Id = source.FridgeIngredients[j].Id,
-                            FridgeId = source.FridgeIngredients[j].FridgeId,
-                            IngredientId = source.FridgeIngredients[j].IngredientId,
-                            IngredientName = IngredientName,
-                            Count = source.FridgeIngredients[j].Count
-                        });
-                    }
-                }
-                result.Add(new FridgeViewModel
-                {
-                    Id = source.Fridges[i].Id,
-                    FridgeName = source.Fridges[i].FridgeName,
-                    FridgeIngredients = FridgeIngredients
-                });
-            }
+                    Id = rec.Id,
+                    FridgeName = rec.FridgeName,
+                    FridgeIngredients = source.FridgeIngredients
+                             .Where(recPC => recPC.FridgeId == rec.Id)
+                             .Select(recPC => new FridgeIngredientViewModel
+                             {
+
+                                 Id = recPC.Id,
+                                 FridgeId = recPC.FridgeId,
+                                 IngredientId = recPC.IngredientId,
+                                 IngredientName = source.Ingredients
+                                     .FirstOrDefault(recC => recC.Id == recPC.IngredientId)?.IngredientName,
+                                 Count = recPC.Count
+                             })
+                             .ToList()
+                })
+                .ToList();
             return result;
         }
 
@@ -145,24 +109,20 @@ namespace SweetShopService.ImplementationsList
 
         public void UpdElement(FridgeBindingModel model)
         {
-            int index = -1;
-            for (int i = 0; i < source.Fridges.Count; ++i)
+            Fridge element = source.Fridges.FirstOrDefault(rec =>
+ rec.FridgeName == model.FridgeName && rec.Id != model.Id);
+            if (element != null)
             {
-                if (source.Fridges[i].Id == model.Id)
-                {
-                    index = i;
-                }
-                if (source.Fridges[i].FridgeName == model.FridgeName &&
-                    source.Fridges[i].Id != model.Id)
-                {
-                    throw new Exception("Уже есть холодильник с таким названием");
-                }
+
+                throw new Exception("Уже есть холодильник с таким названием");
+
             }
-            if (index == -1)
+            element = source.Fridges.FirstOrDefault(rec => rec.Id == model.Id);
+            if (element == null)
             {
                 throw new Exception("Холодильник не найден");
             }
-            source.Fridges[index].FridgeName = model.FridgeName;
+            element.FridgeName = model.FridgeName;
         }
     }
 }
