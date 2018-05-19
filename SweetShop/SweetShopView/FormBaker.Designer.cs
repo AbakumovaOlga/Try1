@@ -60,7 +60,6 @@
             this.FBakFIO.Name = "FBakFIO";
             this.FBakFIO.Size = new System.Drawing.Size(329, 26);
             this.FBakFIO.TabIndex = 5;
-            this.FBakFIO.TextChanged += new System.EventHandler(this.FBakFIO_TextChanged);
             // 
             // label1
             // 

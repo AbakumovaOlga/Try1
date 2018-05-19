@@ -28,7 +28,7 @@ namespace SweetShopView
 
         private void FormMain_Load(object sender, EventArgs e)
         {
-
+            LoadData();
         }
 
         private void LoadData()
@@ -144,11 +144,6 @@ namespace SweetShopView
         private void FMRel_Click(object sender, EventArgs e)
         {
             LoadData();
-        }
-
-        private void FMList_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-
         }
     }
 }

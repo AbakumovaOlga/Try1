@@ -1,0 +1,20 @@
+﻿<Window x:Class="SweetShopWPF.Baker"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SweetShopWPF"
+        mc:Ignorable="d"
+        Title="Baker" Height="200" Width="600">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="548*"/>
+            <ColumnDefinition Width="45*"/>
+        </Grid.ColumnDefinitions>
+        <Label Content="FIO" HorizontalAlignment="Left" Margin="14,17,0,0" VerticalAlignment="Top" Height="42" RenderTransformOrigin="0.5,0.5" Width="52"/>
+        <TextBox x:Name="FBakFIO" HorizontalAlignment="Left" Height="42" Margin="152,17,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="378"/>
+        <Button x:Name="FBakSave" Content="Save" HorizontalAlignment="Left" Height="32" Margin="152,94,0,0" VerticalAlignment="Top" Width="103" Click="FBSave_Click"/>
+        <Button x:Name="FBakCancel" Content="Canel" HorizontalAlignment="Left" Height="32" Margin="295,94,0,0" VerticalAlignment="Top" Width="109" Click="FBCancel_Click"/>
+
+    </Grid>
+</Window>

@@ -42,7 +42,6 @@
             this.label1.Size = new System.Drawing.Size(36, 20);
             this.label1.TabIndex = 0;
             this.label1.Text = "FIO";
-            this.label1.Click += new System.EventHandler(this.label1_Click);
             // 
             // FCusFIO
             // 
@@ -50,7 +49,6 @@
             this.FCusFIO.Name = "FCusFIO";
             this.FCusFIO.Size = new System.Drawing.Size(329, 26);
             this.FCusFIO.TabIndex = 1;
-            this.FCusFIO.TextChanged += new System.EventHandler(this.FCusFIO_TextChanged);
             // 
             // FCusSave
             // 
