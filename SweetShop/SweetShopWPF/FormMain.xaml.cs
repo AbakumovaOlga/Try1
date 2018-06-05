@@ -1,4 +1,6 @@
-﻿using SweetShopService.Interfaces;
+﻿using Microsoft.Win32;
+using SweetShopService.BindingModels;
+using SweetShopService.Interfaces;
 using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -27,11 +29,12 @@ namespace SweetShopWPF
         public IUnityContainer Container { get; set; }
 
         private readonly IMainService service;
-
-        public FormMain(IMainService service)
+        private readonly IReportService reportService;
+        public FormMain(IMainService service, IReportService reportService)
         {
             InitializeComponent();
             this.service = service;
+            this.reportService = reportService;
             Loaded += FormMain_Load;
         }
 
@@ -152,6 +155,59 @@ namespace SweetShopWPF
         private void FMRel_Click(object sender, RoutedEventArgs e)
         {
             LoadData();
+        }
+
+        private void priceCakesToolStripMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog sfd = new SaveFileDialog
+            {
+                Filter = "doc|*.doc|docx|*.docx"
+            };
+            if (sfd.ShowDialog() == true)
+            {
+                try
+                {
+                    reportService.SaveCakePrice(new ReportBindingModel
+                    {
+                        FileName = sfd.FileName
+                    });
+                    MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void customersRequestsToolStripMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+
+            var form = Container.Resolve<FormCustomerRequests>();
+            form.ShowDialog();
+        }
+
+        private void fullnessOfFridgesToolStripMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog sfd = new SaveFileDialog
+            {
+                Filter = "xls|*.xls|xlsx|*.xlsx"
+            };
+            if (sfd.ShowDialog() == true)
+            {
+                try
+                {
+                    reportService.SaveFridgesLoad(new ReportBindingModel
+                    {
+                        FileName = sfd.FileName
+                    });
+                    MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
     }
 }

@@ -132,21 +132,21 @@
             this.priceCakesToolStripMenuItem.Name = "priceCakesToolStripMenuItem";
             this.priceCakesToolStripMenuItem.Size = new System.Drawing.Size(258, 30);
             this.priceCakesToolStripMenuItem.Text = "Price Cakes";
-            this.priceCakesToolStripMenuItem.Click += new System.EventHandler(this.priceCakesToolStripMenuItem_Click);
+//            this.priceCakesToolStripMenuItem.Click += new System.EventHandler(this.priceCakesToolStripMenuItem_Click);
             // 
             // fullnessOfFridgesToolStripMenuItem
             // 
             this.fullnessOfFridgesToolStripMenuItem.Name = "fullnessOfFridgesToolStripMenuItem";
             this.fullnessOfFridgesToolStripMenuItem.Size = new System.Drawing.Size(258, 30);
             this.fullnessOfFridgesToolStripMenuItem.Text = "Fullness of Fridges";
-            this.fullnessOfFridgesToolStripMenuItem.Click += new System.EventHandler(this.fullnessOfFridgesToolStripMenuItem_Click);
+      //      this.fullnessOfFridgesToolStripMenuItem.Click += new System.EventHandler(this.fullnessOfFridgesToolStripMenuItem_Click);
             // 
             // customersRequestsToolStripMenuItem
             // 
             this.customersRequestsToolStripMenuItem.Name = "customersRequestsToolStripMenuItem";
             this.customersRequestsToolStripMenuItem.Size = new System.Drawing.Size(258, 30);
             this.customersRequestsToolStripMenuItem.Text = "Customer`s requests";
-            this.customersRequestsToolStripMenuItem.Click += new System.EventHandler(this.customersRequestsToolStripMenuItem_Click);
+      //      this.customersRequestsToolStripMenuItem.Click += new System.EventHandler(this.customersRequestsToolStripMenuItem_Click);
             // 
             // FMList
             // 

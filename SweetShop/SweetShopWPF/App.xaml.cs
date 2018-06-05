@@ -42,7 +42,7 @@ namespace SweetShopWPF
             currentContainer.RegisterType<ICakeService, CakeServiceBD>(new HierarchicalLifetimeManager());
             currentContainer.RegisterType<IFridgeService, FridgeServiceBD>(new HierarchicalLifetimeManager());
             currentContainer.RegisterType<IMainService, MainServiceBD>(new HierarchicalLifetimeManager());
-
+            currentContainer.RegisterType<IReportService, ReportServiceBD>(new HierarchicalLifetimeManager());
             return currentContainer;
         }
     }
