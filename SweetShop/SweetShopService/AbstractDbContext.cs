@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace SweetShopService
 {
-    [Table("AbstractDatabase")]
+    [Table("AbstractDatabaseWPF")]
     public class AbstractDbContext : DbContext
     {
         public AbstractDbContext()
