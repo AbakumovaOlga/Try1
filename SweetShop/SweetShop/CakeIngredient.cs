@@ -15,5 +15,9 @@ namespace SweetShop
         public int IngredientId { get; set; }
 
         public int Count { get; set; }
+
+        public virtual Cake Cake { get; set; }
+
+        public virtual Ingredient Ingredient { get; set; }
     }
 }
