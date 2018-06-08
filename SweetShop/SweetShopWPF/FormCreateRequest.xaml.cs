@@ -24,21 +24,9 @@ namespace SweetShopWPF
     /// </summary>
     public partial class FormCreateRequest : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly ICustomerService serviceC;
-
-        private readonly ICakeService serviceCake;
-
-        private readonly IMainService serviceM;
-
-        public FormCreateRequest(ICustomerService serviceC, ICakeService serviceCake, IMainService serviceM)
+        public FormCreateRequest()
         {
             InitializeComponent();
-            this.serviceC = serviceC;
-            this.serviceCake = serviceCake;
-            this.serviceM = serviceM;
             Loaded += FormCreateRequest_Load;
         }
 
@@ -46,22 +34,39 @@ namespace SweetShopWPF
         {
             try
             {
-                List<CustomerViewModel> listC = serviceC.GetList();
-                if (listC != null)
+                var responseC = APICustomer.GetRequest("api/Customer/GetList");
+                if (responseC.Result.IsSuccessStatusCode)
                 {
-                    FCRCustomer.DisplayMemberPath = "CustomerFIO";
-                    FCRCustomer.SelectedValuePath = "Id";
-                    FCRCustomer.ItemsSource = listC;
-                    FCRCustomer.SelectedItem = null;
+                    List<CustomerViewModel> list = APICustomer.GetElement<List<CustomerViewModel>>(responseC);
+                    if (list != null)
+                    {
+                        FCRCustomer.DisplayMemberPath = "CustomerFIO";
+                        FCRCustomer.SelectedValuePath = "Id";
+                        FCRCustomer.ItemsSource = list;
+                        FCRCake.SelectedItem = null;
+                    }
                 }
-                List<CakeViewModel> listP = serviceCake.GetList();
-                if (listP != null)
+                else
                 {
-                    FCRCake.DisplayMemberPath = "CakeName";
-                    FCRCake.SelectedValuePath = "Id";
-                    FCRCake.ItemsSource = listP;
-                    FCRCake.SelectedItem = null;
+                    throw new Exception(APICustomer.GetError(responseC));
                 }
+                var responseP = APICustomer.GetRequest("api/Cake/GetList");
+                if (responseP.Result.IsSuccessStatusCode)
+                {
+                    List<CakeViewModel> list = APICustomer.GetElement<List<CakeViewModel>>(responseP);
+                    if (list != null)
+                    {
+                        FCRCake.DisplayMemberPath = "CakeName";
+                        FCRCake.SelectedValuePath = "Id";
+                        FCRCake.ItemsSource = list;
+                        FCRCake.SelectedItem = null;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(responseP));
+                }
+
             }
             catch (Exception ex)
             {
@@ -70,14 +75,22 @@ namespace SweetShopWPF
         }
         private void CalcSum()
         {
-            if (FCRCake.SelectedValue != null && !string.IsNullOrEmpty(FCRNumber.Text))
+            if (FCRCake.SelectedItem != null && !string.IsNullOrEmpty(FCRNumber.Text))
             {
                 try
                 {
-                    int id = Convert.ToInt32(FCRCake.SelectedValue);
-                    CakeViewModel Cake = serviceCake.GetElement(id);
-                    int Number = Convert.ToInt32(FCRNumber.Text);
-                    FCRSum.Text = (Number * Cake.Price).ToString();
+                    int id = ((CakeViewModel)FCRCake.SelectedItem).Id;
+                    var responseP = APICustomer.GetRequest("api/Cake/Get/" + id);
+                    if (responseP.Result.IsSuccessStatusCode)
+                    {
+                        CakeViewModel Cake = APICustomer.GetElement<CakeViewModel>(responseP);
+                        int count = Convert.ToInt32(FCRNumber.Text);
+                        FCRSum.Text = (count * (int)Cake.Price).ToString();
+                    }
+                    else
+                    {
+                        throw new Exception(APICustomer.GetError(responseP));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -103,28 +116,35 @@ namespace SweetShopWPF
                 MessageBox.Show("Заполните поле Количество", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            if (FCRCustomer.SelectedValue == null)
+            if (FCRCustomer.SelectedItem == null)
             {
-                MessageBox.Show("Выберите клиента", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Выберите получателя", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            if (FCRCake.SelectedValue == null)
+            if (FCRCake.SelectedItem == null)
             {
-                MessageBox.Show("Выберите изделие", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Выберите мебель", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             try
             {
-                serviceM.CreateRequest(new RequestBindingModel
+                var response = APICustomer.PostRequest("api/Main/CreateRequest", new RequestBindingModel
                 {
                     CustomerId = Convert.ToInt32(FCRCustomer.SelectedValue),
                     CakeId = Convert.ToInt32(FCRCake.SelectedValue),
                     Count = Convert.ToInt32(FCRNumber.Text),
                     Sum = Convert.ToInt32(FCRSum.Text)
                 });
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
             }
             catch (Exception ex)
             {
@@ -136,11 +156,6 @@ namespace SweetShopWPF
         {
             DialogResult = false;
             Close();
-        }
-
-        private void FCRCake_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-
         }
 
         private void FCRNumber_TextChanged_1(object sender, TextChangedEventArgs e)

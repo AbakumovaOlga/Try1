@@ -23,50 +23,43 @@ namespace SweetShopWPF
     /// </summary>
     public partial class FormCakeIngredient : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
 
         public CakeIngredientViewModel Model { set { model = value; } get { return model; } }
 
-        private readonly IIngredientService service;
-
         private CakeIngredientViewModel model;
 
-        public FormCakeIngredient(IIngredientService service)
+        public FormCakeIngredient()
         {
             InitializeComponent();
-            this.service = service;
             Loaded += FormCakeIngredient_Load;
         }
 
         private void FormCakeIngredient_Load(object sender, RoutedEventArgs e)
         {
-            List<IngredientViewModel> list = service.GetList();
             try
             {
-                if (list != null)
+                var response = APICustomer.GetRequest("api/Ingredient/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
                     FCIIngr.DisplayMemberPath = "IngredientName";
                     FCIIngr.SelectedValuePath = "Id";
-                    FCIIngr.ItemsSource = list;
+                    FCIIngr.ItemsSource = APICustomer.GetElement<List<IngredientViewModel>>(response);
                     FCIIngr.SelectedItem = null;
                 }
-
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+
             if (model != null)
             {
                 FCIIngr.IsEnabled = false;
-                foreach (IngredientViewModel item in list)
-                {
-                    if (item.IngredientName == model.IngredientName)
-                    {
-                        FCIIngr.SelectedItem = item;
-                    }
-                }
+                FCIIngr.SelectedValue = model.IngredientId;
                 FCINumber.Text = model.Count.ToString();
             }
         }
@@ -78,9 +71,9 @@ namespace SweetShopWPF
                 MessageBox.Show("Заполните поле Количество", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            if (FCIIngr.SelectedValue == null)
+            if (FCIIngr.SelectedItem == null)
             {
-                MessageBox.Show("Выберите компонент", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Выберите заготовку", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             try
@@ -98,7 +91,7 @@ namespace SweetShopWPF
                 {
                     model.Count = Convert.ToInt32(FCINumber.Text);
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Сохранение прошло успешно", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
                 DialogResult = true;
                 Close();
             }

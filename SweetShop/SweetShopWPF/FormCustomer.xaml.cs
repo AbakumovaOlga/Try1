@@ -3,6 +3,7 @@ using SweetShopService.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -23,20 +24,13 @@ namespace SweetShopWPF
     /// </summary>
     public partial class FormCustomer : Window
     {
-        [Dependency]
-
-        public new IUnityContainer Container { get; set; }
-
-        public int Id { set { Id = value; } }
-
-        private readonly ICustomerService service;
+        public int Id { set { id = value; } }
 
         private int? id;
 
-        public FormCustomer(ICustomerService service)
+        public FormCustomer()
         {
             InitializeComponent();
-            this.service = service;
             Loaded += FormCustomer_Load;
         }
 
@@ -46,15 +40,20 @@ namespace SweetShopWPF
             {
                 try
                 {
-                    CustomerViewModel view = service.GetElement(id.Value);
-                    if (view != null)
+                    var response = APICustomer.GetRequest("api/Customer/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
                     {
-                        FCusFIO.Text = view.CustomerFIO;
+                        var Customer = APICustomer.GetElement<CustomerViewModel>(response);
+                        FCusFIO.Text = Customer.CustomerFIO;
+                    }
+                    else
+                    {
+                        throw new Exception(APICustomer.GetError(response));
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -63,14 +62,15 @@ namespace SweetShopWPF
         {
             if (string.IsNullOrEmpty(FCusFIO.Text))
             {
-                MessageBox.Show("Check FIO", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Заполните ФИО", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             try
             {
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new CustomerBindingModel
+                    response = APICustomer.PostRequest("api/Customer/UpdElement", new CustomerBindingModel
                     {
                         Id = id.Value,
                         CustomerFIO = FCusFIO.Text
@@ -78,18 +78,25 @@ namespace SweetShopWPF
                 }
                 else
                 {
-                    service.AddElement(new CustomerBindingModel
+                    response = APICustomer.PostRequest("api/Customer/AddElement", new CustomerBindingModel
                     {
                         CustomerFIO = FCusFIO.Text
                     });
                 }
-                MessageBox.Show("Save: Successful", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

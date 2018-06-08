@@ -4,6 +4,7 @@ using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -24,19 +25,13 @@ namespace SweetShopWPF
     /// </summary>
     public partial class FormIngredient : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly IIngredientService service;
 
         private int? id;
 
-        public FormIngredient(IIngredientService service)
+        public FormIngredient()
         {
             InitializeComponent();
-            this.service = service;
             Loaded += FormIngredient_Load;
         }
 
@@ -46,10 +41,15 @@ namespace SweetShopWPF
             {
                 try
                 {
-                    IngredientViewModel view = service.GetElement(id.Value);
-                    if (view != null)
+                    var response = APICustomer.GetRequest("api/Ingredient/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
                     {
-                        FIngrName.Text = view.IngredientName;
+                        var Ingredient = APICustomer.GetElement<IngredientViewModel>(response);
+                        FIngrName.Text = Ingredient.IngredientName;
+                    }
+                    else
+                    {
+                        throw new Exception(APICustomer.GetError(response));
                     }
                 }
                 catch (Exception ex)
@@ -68,9 +68,10 @@ namespace SweetShopWPF
             }
             try
             {
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new IngredientBindingModel
+                    response = APICustomer.PostRequest("api/Ingredient/UpdElement", new IngredientBindingModel
                     {
                         Id = id.Value,
                         IngredientName = FIngrName.Text
@@ -78,14 +79,21 @@ namespace SweetShopWPF
                 }
                 else
                 {
-                    service.AddElement(new IngredientBindingModel
+                    response = APICustomer.PostRequest("api/Ingredient/AddElement", new IngredientBindingModel
                     {
                         IngredientName = FIngrName.Text
                     });
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
             }
             catch (Exception ex)
             {

@@ -1,4 +1,5 @@
-﻿using SweetShopService.Interfaces;
+﻿using SweetShopService.BindingModels;
+using SweetShopService.Interfaces;
 using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -23,15 +24,9 @@ namespace SweetShopWPF
     /// </summary>
     public partial class FormCakes : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly ICakeService service;
-
-        public FormCakes(ICakeService service)
+        public FormCakes()
         {
             InitializeComponent();
-            this.service = service;
             Loaded += FormCakes_Load;
         }
 
@@ -44,12 +39,21 @@ namespace SweetShopWPF
         {
             try
             {
-                List<CakeViewModel> list = service.GetList();
-                if (list != null)
+                var response = APICustomer.GetRequest("api/Cake/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    FCakeSList.ItemsSource = list;
-                    FCakeSList.Columns[0].Visibility = Visibility.Hidden;
-                    FCakeSList.Columns[1].Width = DataGridLength.Auto;
+                    List<CakeViewModel> list = APICustomer.GetElement<List<CakeViewModel>>(response);
+                    if (list != null)
+                    {
+                        FCakeSList.ItemsSource = list;
+                        FCakeSList.Columns[0].Visibility = Visibility.Hidden;
+                        FCakeSList.Columns[1].Width = DataGridLength.Auto;
+                        FCakeSList.Columns[3].Visibility = Visibility.Hidden;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -60,23 +64,27 @@ namespace SweetShopWPF
 
         private void FCakeSAdd_Click(object sender, RoutedEventArgs e)
         {
-            var form = Container.Resolve<FormCake>();
+            var form = new FormCake();
             if (form.ShowDialog() == true)
-            {
                 LoadData();
-            }
         }
 
         private void FCakeSAddDel_Click(object sender, RoutedEventArgs e)
         {
             if (FCakeSList.SelectedItem != null)
             {
-                if (MessageBox.Show("Удалить запись", "Вопрос", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                if (MessageBox.Show("Удалить запись?", "Внимание",
+                MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
-                    int id = ((BakerViewModel)FCakeSList.SelectedItem).Id;
+
+                    int id = ((CakeViewModel)FCakeSList.SelectedItem).Id;
                     try
                     {
-                        service.DelElement(id);
+                        var response = APICustomer.PostRequest("api/Cake/DelElement", new CustomerBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APICustomer.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -91,12 +99,10 @@ namespace SweetShopWPF
         {
             if (FCakeSList.SelectedItem != null)
             {
-                var form = Container.Resolve<FormCake>();
+                var form = new FormCake();
                 form.Id = ((CakeViewModel)FCakeSList.SelectedItem).Id;
                 if (form.ShowDialog() == true)
-                {
                     LoadData();
-                }
             }
         }
 

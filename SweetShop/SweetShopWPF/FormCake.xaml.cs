@@ -4,6 +4,7 @@ using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -24,20 +25,15 @@ namespace SweetShopWPF
     /// </summary>
     public partial class FormCake : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly ICakeService service;
-
+        
         private int? id;
 
         private List<CakeIngredientViewModel> CakeIngredients;
-        public FormCake(ICakeService service)
+
+        public FormCake()
         {
             InitializeComponent();
-            this.service = service;
             Loaded += FormCake_Load;
         }
 
@@ -47,13 +43,18 @@ namespace SweetShopWPF
             {
                 try
                 {
-                    CakeViewModel view = service.GetElement(id.Value);
-                    if (view != null)
+                    var response = APICustomer.GetRequest("api/Cake/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
                     {
-                        FCakeName.Text = view.CakeName;
-                        FCakePrice.Text = view.Price.ToString();
-                        CakeIngredients = view.CakeIngredients;
+                        var Cake = APICustomer.GetElement<CakeViewModel>(response);
+                        FCakeName.Text = Cake.CakeName;
+                        FCakePrice.Text = Cake.Price.ToString();
+                        CakeIngredients = Cake.CakeIngredients;
                         LoadData();
+                    }
+                    else
+                    {
+                        throw new Exception(APICustomer.GetError(response));
                     }
                 }
                 catch (Exception ex)
@@ -89,15 +90,13 @@ namespace SweetShopWPF
 
         private void FCakeAdd_Click(object sender, RoutedEventArgs e)
         {
-            var form = Container.Resolve<FormCakeIngredient>();
+            var form = new FormCakeIngredient();
             if (form.ShowDialog() == true)
             {
                 if (form.Model != null)
                 {
                     if (id.HasValue)
-                    {
                         form.Model.CakeId = id.Value;
-                    }
                     CakeIngredients.Add(form.Model);
                 }
                 LoadData();
@@ -108,7 +107,7 @@ namespace SweetShopWPF
         {
             if (FCList.SelectedItem != null)
             {
-                var form = Container.Resolve<FormCakeIngredient>();
+                var form = new FormCakeIngredient();
                 form.Model = CakeIngredients[FCList.SelectedIndex];
                 if (form.ShowDialog() == true)
                 {
@@ -122,7 +121,8 @@ namespace SweetShopWPF
         {
             if (FCList.SelectedItem != null)
             {
-                if (MessageBox.Show("Удалить запись", "Вопрос", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                if (MessageBox.Show("Удалить запись?", "Внимание",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
                     try
                     {
@@ -156,15 +156,15 @@ namespace SweetShopWPF
             }
             if (CakeIngredients == null || CakeIngredients.Count == 0)
             {
-                MessageBox.Show("Заполните компоненты", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Заполните заготовки", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             try
             {
-                List<CakeIngredientBindingModel> CakeIngredientBM = new List<CakeIngredientBindingModel>();
+                List<CakeIngredientBindingModel> productComponentBM = new List<CakeIngredientBindingModel>();
                 for (int i = 0; i < CakeIngredients.Count; ++i)
                 {
-                    CakeIngredientBM.Add(new CakeIngredientBindingModel
+                    productComponentBM.Add(new CakeIngredientBindingModel
                     {
                         Id = CakeIngredients[i].Id,
                         CakeId = CakeIngredients[i].CakeId,
@@ -172,28 +172,36 @@ namespace SweetShopWPF
                         Count = CakeIngredients[i].Count
                     });
                 }
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new CakeBindingModel
+                    response = APICustomer.PostRequest("api/Cake/UpdElement", new CakeBindingModel
                     {
                         Id = id.Value,
                         CakeName = FCakeName.Text,
                         Price = Convert.ToInt32(FCakePrice.Text),
-                        CakeIngredients = CakeIngredientBM
+                        CakeIngredients = productComponentBM
                     });
                 }
                 else
                 {
-                    service.AddElement(new CakeBindingModel
+                    response = APICustomer.PostRequest("api/Cake/AddElement", new CakeBindingModel
                     {
                         CakeName = FCakeName.Text,
                         Price = Convert.ToInt32(FCakePrice.Text),
-                        CakeIngredients = CakeIngredientBM
+                        CakeIngredients = productComponentBM
                     });
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
             }
             catch (Exception ex)
             {

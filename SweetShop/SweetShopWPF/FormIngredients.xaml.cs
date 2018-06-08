@@ -1,4 +1,5 @@
-﻿using SweetShopService.Interfaces;
+﻿using SweetShopService.BindingModels;
+using SweetShopService.Interfaces;
 using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -23,15 +24,9 @@ namespace SweetShopWPF
     /// </summary>
     public partial class FormIngredients : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IIngredientService service;
-
-        public FormIngredients(IIngredientService service)
+        public FormIngredients()
         {
             InitializeComponent();
-            this.service = service;
             Loaded += FormIngredients_Load;
         }
 
@@ -44,12 +39,20 @@ namespace SweetShopWPF
         {
             try
             {
-                List<IngredientViewModel> list = service.GetList();
-                if (list != null)
+                var response = APICustomer.GetRequest("api/Ingredient/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    FIngrSList.ItemsSource = list;
-                    FIngrSList.Columns[0].Visibility = Visibility.Hidden;
-                    FIngrSList.Columns[1].Width = DataGridLength.Auto;
+                    List<IngredientViewModel> list = APICustomer.GetElement<List<IngredientViewModel>>(response);
+                    if (list != null)
+                    {
+                        FIngrSList.ItemsSource = list;
+                        FIngrSList.Columns[0].Visibility = Visibility.Hidden;
+                        FIngrSList.Columns[1].Width = DataGridLength.Auto;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -60,11 +63,9 @@ namespace SweetShopWPF
 
         private void FIngrSAdd_Click(object sender, RoutedEventArgs e)
         {
-            var form = Container.Resolve<FormIngredient>();
+            var form = new FormIngredient();
             if (form.ShowDialog() == true)
-            {
                 LoadData();
-            }
         }
 
         private void FIngrSRel_Click(object sender, RoutedEventArgs e)
@@ -76,12 +77,17 @@ namespace SweetShopWPF
         {
             if (FIngrSList.SelectedItem != null)
             {
-                if (MessageBox.Show("Удалить запись", "Вопрос", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                if (MessageBox.Show("Удалить запись?", "Внимание",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
                     int id = ((IngredientViewModel)FIngrSList.SelectedItem).Id;
                     try
                     {
-                        service.DelElement(id);
+                        var response = APICustomer.PostRequest("api/Ingredient/DelElement", new CustomerBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APICustomer.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -96,12 +102,10 @@ namespace SweetShopWPF
         {
             if (FIngrSList.SelectedItem != null)
             {
-                var form = Container.Resolve<FormIngredient>();
+                var form = new FormIngredient();
                 form.Id = ((IngredientViewModel)FIngrSList.SelectedItem).Id;
                 if (form.ShowDialog() == true)
-                {
                     LoadData();
-                }
             }
         }
     }

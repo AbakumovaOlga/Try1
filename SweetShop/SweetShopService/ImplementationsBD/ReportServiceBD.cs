@@ -133,7 +133,7 @@ namespace SweetShopService.ImplementationsBD
             {
                 FridgeName = Fridge.FridgeName,
                 TotalCount = FridgeCompList.Sum(r => r.Count),
-                Ingredients = FridgeCompList.Select(r => new Tuple<string, int>(r.Ingredient.IngredientName, r.Count))
+                Ingredients = FridgeCompList.Select(r => new FridgesIngredientLoadViewModel { IngredientName = r.Ingredient.IngredientName, Count = r.Count }).ToList()
             })
                             .ToList();
         }
@@ -220,9 +220,11 @@ namespace SweetShopService.ImplementationsBD
 
                             foreach (var listElem in elem.Ingredients)
                             {
-                                excelcells.Value2 = listElem.Item1;
+                                // excelcells.Value2 = listElem.Item1;
+                                excelcells.Value2 = listElem.IngredientName;
                                 excelcells.ColumnWidth = 10;
-                                excelcells.get_Offset(0, 1).Value2 = listElem.Item2;
+                                //excelcells.get_Offset(0, 1).Value2 = listElem.Item2;
+                                excelcells.get_Offset(0, 1).Value2 = listElem.Count;
                                 excelcells = excelcells.get_Offset(1, 0);
                             }
                         }

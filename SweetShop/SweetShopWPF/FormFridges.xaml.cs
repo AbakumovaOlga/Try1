@@ -1,4 +1,5 @@
-﻿using SweetShopService.Interfaces;
+﻿using SweetShopService.BindingModels;
+using SweetShopService.Interfaces;
 using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -23,15 +24,9 @@ namespace SweetShopWPF
     /// </summary>
     public partial class FormFridges : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IFridgeService service;
-
-        public FormFridges(IFridgeService service)
+        public FormFridges()
         {
             InitializeComponent();
-            this.service = service;
             Loaded += FormFridges_Load;
         }
 
@@ -43,11 +38,16 @@ namespace SweetShopWPF
         {
             try
             {
-                List<FridgeViewModel> list = service.GetList();
-                if (list != null)
+                var response = APICustomer.GetRequest("api/Fridge/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    FFrSList.ItemsSource = list;
-                    FFrSList.Columns[0].Width = DataGridLength.Auto;
+                    List<FridgeViewModel> list = APICustomer.GetElement<List<FridgeViewModel>>(response);
+                    if (list != null)
+                    {
+                        FFrSList.ItemsSource = list;
+                        FFrSList.Columns[0].Visibility = Visibility.Hidden;
+                        FFrSList.Columns[1].Width = DataGridLength.Auto;
+                    }
                 }
             }
             catch (Exception ex)
@@ -59,19 +59,17 @@ namespace SweetShopWPF
 
         private void FFrSAdd_Click(object sender, RoutedEventArgs e)
         {
-            var form = Container.Resolve<FormFridge>();
+            var form = new FormFridge();
             if (form.ShowDialog() == true)
-            {
                 LoadData();
-            }
         }
 
         private void FFrSUpd_Click(object sender, RoutedEventArgs e)
         {
             if (FFrSList.SelectedItem != null)
             {
-                var form = Container.Resolve<FormFridge>();
-                form.Id = ((BakerViewModel)FFrSList.SelectedItem).Id;
+                var form = new FormFridge();
+                form.Id = ((FridgeViewModel)FFrSList.SelectedItem).Id;
                 if (form.ShowDialog() == true)
                 {
                     LoadData();
@@ -88,12 +86,17 @@ namespace SweetShopWPF
         {
             if (FFrSList.SelectedItem != null)
             {
-                if (MessageBox.Show("Удалить запись", "Вопрос", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                if (MessageBox.Show("Удалить запись?", "Внимание",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
                     int id = ((FridgeViewModel)FFrSList.SelectedItem).Id;
                     try
                     {
-                        service.DelElement(id);
+                        var response = APICustomer.PostRequest("api/Fridge/DelElement", new CustomerBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APICustomer.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {

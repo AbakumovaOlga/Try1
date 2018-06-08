@@ -1,4 +1,5 @@
-﻿using SweetShopService.Interfaces;
+﻿using SweetShopService.BindingModels;
+using SweetShopService.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,15 +23,9 @@ namespace SweetShopWPF
     /// </summary>
     public partial class FormCustomers : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly ICustomerService service;
-
-        public FormCustomers(ICustomerService service)
+        public FormCustomers()
         {
             InitializeComponent();
-            this.service = service;
             Loaded += FormCustomers_Load;
         }
 
@@ -43,23 +38,32 @@ namespace SweetShopWPF
         {
             try
             {
-                List<CustomerViewModel> list = service.GetList();
-                if (list != null)
+                var response = APICustomer.GetRequest("api/Customer/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    FCusSList.ItemsSource = list;
-                    FCusSList.Columns[0].Visibility = Visibility.Hidden;
-                    FCusSList.Columns[1].Width = DataGridLength.Auto;
+                    List<CustomerViewModel> list = APICustomer.GetElement<List<CustomerViewModel>>(response);
+                    if (list != null)
+                    {
+                        FCusSList.ItemsSource = list;
+                        FCusSList.Columns[0].Visibility = Visibility.Hidden;
+                        FCusSList.Columns[1].Width = DataGridLength.Auto;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
+
         private void FCusSAdd_Click(object sender, RoutedEventArgs e)
         {
-            var form = Container.Resolve<FormCustomer>();
+            var form = new FormCustomer();
             if (form.ShowDialog() == true)
             {
                 LoadData();
@@ -75,16 +79,21 @@ namespace SweetShopWPF
         {
             if (FCusSList.SelectedItem != null)
             {
-                if (MessageBox.Show("Удалить запись", "Вопрос", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                if (MessageBox.Show("Удалить запись?", "Внимание",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
                     int id = ((CustomerViewModel)FCusSList.SelectedItem).Id;
                     try
                     {
-                        service.DelElement(id);
+                        var response = APICustomer.PostRequest("api/Customer/DelElement", new CustomerBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APICustomer.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                     LoadData();
                 }
@@ -95,7 +104,7 @@ namespace SweetShopWPF
         {
             if (FCusSList.SelectedItem != null)
             {
-                var form = Container.Resolve<FormCustomer>();
+                var form = new FormCustomer();
                 form.Id = ((CustomerViewModel)FCusSList.SelectedItem).Id;
                 if (form.ShowDialog() == true)
                 {
@@ -105,3 +114,4 @@ namespace SweetShopWPF
         }
     }
 }
+

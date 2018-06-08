@@ -4,6 +4,7 @@ using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -24,19 +25,13 @@ namespace SweetShopWPF
     /// </summary>
     public partial class FormFridge : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly IFridgeService service;
 
         private int? id;
 
-        public FormFridge(IFridgeService service)
+        public FormFridge()
         {
             InitializeComponent();
-            this.service = service;
             Loaded += FormFridge_Load;
         }
 
@@ -46,11 +41,12 @@ namespace SweetShopWPF
             {
                 try
                 {
-                    FridgeViewModel view = service.GetElement(id.Value);
-                    if (view != null)
+                    var response = APICustomer.GetRequest("api/Fridge/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
                     {
-                        FFrName.Text = view.FridgeName;
-                        FFrList.ItemsSource = view.FridgeIngredients;
+                        var Fridge = APICustomer.GetElement<FridgeViewModel>(response);
+                        FFrName.Text = Fridge.FridgeName;
+                        FFrList.ItemsSource = Fridge.FridgeIngredients;
                         FFrList.Columns[0].Visibility = Visibility.Hidden;
                         FFrList.Columns[1].Visibility = Visibility.Hidden;
                         FFrList.Columns[2].Visibility = Visibility.Hidden;
@@ -73,9 +69,10 @@ namespace SweetShopWPF
             }
             try
             {
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new FridgeBindingModel
+                    response = APICustomer.PostRequest("api/Fridge/UpdElement", new FridgeBindingModel
                     {
                         Id = id.Value,
                         FridgeName = FFrName.Text
@@ -83,14 +80,21 @@ namespace SweetShopWPF
                 }
                 else
                 {
-                    service.AddElement(new FridgeBindingModel
+                    response = APICustomer.PostRequest("api/Fridge/AddElement", new FridgeBindingModel
                     {
                         FridgeName = FFrName.Text
                     });
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
             }
             catch (Exception ex)
             {

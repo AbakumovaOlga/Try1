@@ -2,6 +2,7 @@
 using Microsoft.Win32;
 using SweetShopService.BindingModels;
 using SweetShopService.Interfaces;
+using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,19 +26,14 @@ namespace SweetShopWPF
     /// </summary>
     public partial class FormCustomerRequests : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-       private readonly IReportService service;
-        public FormCustomerRequests(IReportService service)
+        public FormCustomerRequests()
         {
             InitializeComponent();
-            this.service = service;
         }
 
         private void buttonMake_Click(object sender, RoutedEventArgs e)
         {
-          
+
             if (dateTimePickerFrom.SelectedDate >= dateTimePickerTo.SelectedDate)
             {
                 MessageBox.Show("Дата начала должна быть меньше даты окончания", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -45,27 +41,30 @@ namespace SweetShopWPF
             }
             try
             {
-
-                reportViewer.LocalReport.ReportEmbeddedResource = "SweetShopWPF.Report1.rdlc";
+                reportViewer.LocalReport.ReportEmbeddedResource = "MebelFactoryViewWpf.ReportCustomerRequests.rdlc";
                 ReportParameter parameter = new ReportParameter("ReportParameterPeriod",
                                             "c " + Convert.ToDateTime(dateTimePickerFrom.SelectedDate).ToString("dd-MM") +
                                             " по " + Convert.ToDateTime(dateTimePickerTo.SelectedDate).ToString("dd-MM"));
                 reportViewer.LocalReport.SetParameters(parameter);
 
 
-                var dataSource = service.GetCustomerRequests(new ReportBindingModel
+                var response = APICustomer.PostRequest("api/Report/GetCustomerRequests", new ReportBindingModel
                 {
                     DateFrom = dateTimePickerFrom.SelectedDate,
                     DateTo = dateTimePickerTo.SelectedDate
                 });
-                ReportDataSource source = new ReportDataSource("DataSetZayavkas", dataSource);
-                reportViewer.LocalReport.DataSources.Add(source);
-
-
-
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    var dataSource = APICustomer.GetElement<List<CustomerRequestsModel>>(response);
+                    ReportDataSource source = new ReportDataSource("DataSetRequests", dataSource);
+                    reportViewer.LocalReport.DataSources.Add(source);
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
 
                 reportViewer.RefreshReport();
-
             }
             catch (Exception ex)
             {
@@ -88,13 +87,20 @@ namespace SweetShopWPF
             {
                 try
                 {
-                    service.SaveCustomerRequests(new ReportBindingModel
+                    var response = APICustomer.PostRequest("api/Report/SaveCustomerRequests", new ReportBindingModel
                     {
                         FileName = sfd.FileName,
                         DateFrom = dateTimePickerFrom.SelectedDate,
                         DateTo = dateTimePickerTo.SelectedDate
                     });
-                    MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                    if (response.Result.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Выполнено", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        throw new Exception(APICustomer.GetError(response));
+                    }
                 }
                 catch (Exception ex)
                 {

@@ -24,22 +24,13 @@ namespace SweetShopWPF
     /// </summary>
     public partial class FormTakeRequestInWork : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly IBakerService serviceB;
-
-        private readonly IMainService serviceM;
 
         private int? id;
 
-        public FormTakeRequestInWork(IBakerService serviceB, IMainService serviceM)
+        public FormTakeRequestInWork()
         {
             InitializeComponent();
-            this.serviceB = serviceB;
-            this.serviceM = serviceM;
             Loaded += FormTakeRequestInWork_Load;
         }
 
@@ -49,16 +40,25 @@ namespace SweetShopWPF
             {
                 if (!id.HasValue)
                 {
-                    MessageBox.Show("Не указан заказ", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Не указана заявка", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     Close();
                 }
-                List<BakerViewModel> listI = serviceB.GetList();
-                if (listI != null)
+                var response = APICustomer.GetRequest("api/Baker/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    FTRBaker.DisplayMemberPath = "BakerFIO";
-                    FTRBaker.SelectedValuePath = "Id";
-                    FTRBaker.ItemsSource = listI;
-                    FTRBaker.SelectedItem = null;
+                    List<BakerViewModel> list = APICustomer.GetElement<List<BakerViewModel>>(response);
+                    if (list != null)
+                    {
+                        FTRBaker.DisplayMemberPath = "BakerFIO";
+                        FTRBaker.SelectedValuePath = "Id";
+                        FTRBaker.ItemsSource = list;
+                        FTRBaker.SelectedItem = null;
+
+                    }
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -69,21 +69,28 @@ namespace SweetShopWPF
 
         private void FTRSave_Click(object sender, RoutedEventArgs e)
         {
-            if (FTRBaker.SelectedValue == null)
+            if (FTRBaker.SelectedItem == null)
             {
-                MessageBox.Show("Выберите исполнителя", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Выберите рабочего", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             try
             {
-                serviceM.TakeRequestInWork(new RequestBindingModel
+                var response = APICustomer.PostRequest("api/Main/TakeRequestInWork", new RequestBindingModel
                 {
                     Id = id.Value,
-                    BakerId = Convert.ToInt32(FTRBaker.SelectedValue)
+                    BakerId = ((BakerViewModel)FTRBaker.SelectedItem).Id,
                 });
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
             }
             catch (Exception ex)
             {

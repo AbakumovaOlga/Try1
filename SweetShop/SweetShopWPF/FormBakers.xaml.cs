@@ -1,4 +1,5 @@
-﻿using SweetShopService.Interfaces;
+﻿using SweetShopService.BindingModels;
+using SweetShopService.Interfaces;
 using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -23,14 +24,9 @@ namespace SweetShopWPF
     /// </summary>
     public partial class FormBakers : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
-        private readonly IBakerService service;
-        public FormBakers(IBakerService service)
+        public FormBakers()
         {
             InitializeComponent();
-            this.service = service;
             Loaded += FormBakers_Load;
         }
 
@@ -43,12 +39,20 @@ namespace SweetShopWPF
         {
             try
             {
-                List<BakerViewModel> list = service.GetList();
-                if (list != null)
+                var response = APICustomer.GetRequest("api/Baker/GetList");
+                if (response.Result.IsSuccessStatusCode)
                 {
-                    FBakSList.ItemsSource = list;
-                    FBakSList.Columns[0].Visibility = Visibility.Hidden;
-                    FBakSList.Columns[1].Width = DataGridLength.Auto;
+                    List<BakerViewModel> list = APICustomer.GetElement<List<BakerViewModel>>(response);
+                    if (list != null)
+                    {
+                        FBakSList.ItemsSource = list;
+                        FBakSList.Columns[0].Visibility = Visibility.Hidden;
+                        FBakSList.Columns[1].Width = DataGridLength.Auto;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
                 }
             }
             catch (Exception ex)
@@ -72,7 +76,11 @@ namespace SweetShopWPF
                     int id = ((BakerViewModel)FBakSList.SelectedItem).Id;
                     try
                     {
-                        service.DelElement(id);
+                        var response = APICustomer.PostRequest("api/Baker/DelElement", new CustomerBindingModel { Id = id });
+                        if (!response.Result.IsSuccessStatusCode)
+                        {
+                            throw new Exception(APICustomer.GetError(response));
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -87,7 +95,7 @@ namespace SweetShopWPF
         {
             if (FBakSList.SelectedItem != null)
             {
-                var form = Container.Resolve<Baker>();
+                var form = new Baker();
                 form.Id = ((BakerViewModel)FBakSList.SelectedItem).Id;
                 if (form.ShowDialog() == true)
                     LoadData();
@@ -96,11 +104,9 @@ namespace SweetShopWPF
 
         private void FBakSAdd_Click(object sender, RoutedEventArgs e)
         {
-            var form = Container.Resolve<Baker>();
+            var form = new Baker();
             if (form.ShowDialog() == true)
-            {
                 LoadData();
-            }
         }
     }
 }

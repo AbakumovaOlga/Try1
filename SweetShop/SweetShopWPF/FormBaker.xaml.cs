@@ -4,6 +4,7 @@ using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -24,19 +25,13 @@ namespace SweetShopWPF
     /// </summary>
     public partial class Baker : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
-
         public int Id { set { id = value; } }
-
-        private readonly IBakerService service;
 
         private int? id;
 
-        public Baker(IBakerService service)
+        public Baker()
         {
             InitializeComponent();
-            this.service = service;
             Loaded += Baker_Load;
         }
 
@@ -46,10 +41,15 @@ namespace SweetShopWPF
             {
                 try
                 {
-                    BakerViewModel view = service.GetElement(id.Value);
-                    if (view != null)
+                    var response = APICustomer.GetRequest("api/Baker/Get/" + id.Value);
+                    if (response.Result.IsSuccessStatusCode)
                     {
-                        FBakFIO.Text = view.BakerFIO;
+                        var rabochiy = APICustomer.GetElement<BakerViewModel>(response);
+                        FBakFIO.Text = rabochiy.BakerFIO;
+                    }
+                    else
+                    {
+                        throw new Exception(APICustomer.GetError(response));
                     }
                 }
                 catch (Exception ex)
@@ -68,9 +68,10 @@ namespace SweetShopWPF
             }
             try
             {
+                Task<HttpResponseMessage> response;
                 if (id.HasValue)
                 {
-                    service.UpdElement(new BakerBindingModel
+                    response = APICustomer.PostRequest("api/Baker/UpdElement", new BakerBindingModel
                     {
                         Id = id.Value,
                         BakerFIO = FBakFIO.Text
@@ -78,14 +79,21 @@ namespace SweetShopWPF
                 }
                 else
                 {
-                    service.AddElement(new BakerBindingModel
+                    response = APICustomer.PostRequest("api/Baker/AddElement", new BakerBindingModel
                     {
                         BakerFIO = FBakFIO.Text
                     });
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
             }
             catch (Exception ex)
             {

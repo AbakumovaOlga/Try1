@@ -24,21 +24,10 @@ namespace SweetShopWPF
     /// </summary>
     public partial class FormReplenishFridge : Window
     {
-        [Dependency]
-        public new IUnityContainer Container { get; set; }
 
-        private readonly IFridgeService serviceF;
-
-        private readonly IIngredientService serviceI;
-
-        private readonly IMainService serviceM;
-
-        public FormReplenishFridge(IFridgeService serviceF, IIngredientService serviceI, IMainService serviceM)
+        public FormReplenishFridge()
         {
             InitializeComponent();
-            this.serviceF = serviceF;
-            this.serviceI = serviceI;
-            this.serviceM = serviceM;
             Loaded += FormReplenishFridge_Load;
         }
 
@@ -46,21 +35,37 @@ namespace SweetShopWPF
         {
             try
             {
-                List<IngredientViewModel> listC = serviceI.GetList();
-                if (listC != null)
+                var responseC = APICustomer.GetRequest("api/Ingredient/GetList");
+                if (responseC.Result.IsSuccessStatusCode)
                 {
-                    FRFIngredient.DisplayMemberPath = "IngredientName";
-                    FRFIngredient.SelectedValuePath = "Id";
-                    FRFIngredient.ItemsSource = listC;
-                    FRFIngredient.SelectedItem = null;
+                    List<IngredientViewModel> list = APICustomer.GetElement<List<IngredientViewModel>>(responseC);
+                    if (list != null)
+                    {
+                        FRFIngredient.DisplayMemberPath = "IngredientName";
+                        FRFIngredient.SelectedValuePath = "Id";
+                        FRFIngredient.ItemsSource = list;
+                        FRFIngredient.SelectedItem = null;
+                    }
                 }
-                List<FridgeViewModel> listS = serviceF.GetList();
-                if (listS != null)
+                else
                 {
-                    FRFFridge.DisplayMemberPath = "FridgeName";
-                    FRFFridge.SelectedValuePath = "Id";
-                    FRFFridge.ItemsSource = listS;
-                    FRFFridge.SelectedItem = null;
+                    throw new Exception(APICustomer.GetError(responseC));
+                }
+                var responseS = APICustomer.GetRequest("api/Fridge/GetList");
+                if (responseS.Result.IsSuccessStatusCode)
+                {
+                    List<FridgeViewModel> list = APICustomer.GetElement<List<FridgeViewModel>>(responseS);
+                    if (list != null)
+                    {
+                        FRFFridge.DisplayMemberPath = "FridgeName";
+                        FRFFridge.SelectedValuePath = "Id";
+                        FRFFridge.ItemsSource = list;
+                        FRFFridge.SelectedItem = null;
+                    }
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(responseC));
                 }
             }
             catch (Exception ex)
@@ -76,27 +81,34 @@ namespace SweetShopWPF
                 MessageBox.Show("Заполните поле Количество", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            if (FRFIngredient.SelectedValue == null)
+            if (FRFIngredient.SelectedItem == null)
             {
-                MessageBox.Show("Выберите компонент", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Выберите заготовку", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            if (FRFFridge.SelectedValue == null)
+            if (FRFFridge.SelectedItem == null)
             {
-                MessageBox.Show("Выберите склад", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Выберите базу", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             try
             {
-                serviceM.PutIngredientOnFridge(new FridgeIngredientBindingModel
+                var response = APICustomer.PostRequest("api/Main/ReplenishFridge", new FridgeIngredientBindingModel
                 {
                     IngredientId = Convert.ToInt32(FRFIngredient.SelectedValue),
                     FridgeId = Convert.ToInt32(FRFFridge.SelectedValue),
                     Count = Convert.ToInt32(FRFNumber.Text)
                 });
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
-                Close();
+                if (response.Result.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    throw new Exception(APICustomer.GetError(response));
+                }
             }
             catch (Exception ex)
             {

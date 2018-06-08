@@ -26,10 +26,11 @@ namespace SweetShopWPF
         [STAThread]
         static void Main()
         {
-            var container = BuildUnityContainer();
+            APICustomer.Connect();
+            //var container = BuildUnityContainer();
 
             var application = new App();
-            application.Run(container.Resolve<FormMain>());
+            application.Run(new FormMain());
         }
 
         public static IUnityContainer BuildUnityContainer()
