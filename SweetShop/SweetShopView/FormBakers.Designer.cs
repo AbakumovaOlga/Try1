@@ -84,7 +84,6 @@
             this.FBakSList.RowTemplate.Height = 28;
             this.FBakSList.Size = new System.Drawing.Size(512, 562);
             this.FBakSList.TabIndex = 5;
-            this.FBakSList.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.FBakSList_CellContentClick);
             // 
             // FormBakers
             // 

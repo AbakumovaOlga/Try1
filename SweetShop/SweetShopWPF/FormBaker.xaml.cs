@@ -3,19 +3,26 @@ using SweetShopService.Interfaces;
 using SweetShopService.ViewModels;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using Unity;
 using Unity.Attributes;
 
-namespace SweetShopView
+namespace SweetShopWPF
 {
-    public partial class FormBaker : Form
+    /// <summary>
+    /// Логика взаимодействия для Baker.xaml
+    /// </summary>
+    public partial class Baker : Window
     {
         [Dependency]
         public new IUnityContainer Container { get; set; }
@@ -26,13 +33,14 @@ namespace SweetShopView
 
         private int? id;
 
-        public FormBaker(IBakerService service)
+        public Baker(IBakerService service)
         {
             InitializeComponent();
             this.service = service;
+            Loaded += Baker_Load;
         }
 
-        private void FormBaker_Load(object sender, EventArgs e)
+        private void Baker_Load(object sender, RoutedEventArgs e)
         {
             if (id.HasValue)
             {
@@ -46,16 +54,16 @@ namespace SweetShopView
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
 
-        private void FBakSave_Click(object sender, EventArgs e)
+        private void FBSave_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(FBakFIO.Text))
             {
-                MessageBox.Show("Заполните ФИО", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Заполните ФИО", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             try
@@ -75,19 +83,19 @@ namespace SweetShopView
                         BakerFIO = FBakFIO.Text
                     });
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                DialogResult = DialogResult.OK;
+                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                DialogResult = true;
                 Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void FBakCancel_Click(object sender, EventArgs e)
+        private void FBCancel_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = DialogResult.Cancel;
+            DialogResult = false;
             Close();
         }
     }

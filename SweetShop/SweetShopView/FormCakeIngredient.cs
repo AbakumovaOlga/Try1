@@ -8,47 +8,26 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace SweetShopView
 {
     public partial class FormCakeIngredient : Form
     {
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
         public CakeIngredientViewModel Model { set { model = value; } get { return model; } }
+
+        private readonly IIngredientService service;
 
         private CakeIngredientViewModel model;
 
-        public FormCakeIngredient()
+        public FormCakeIngredient(IIngredientService service)
         {
             InitializeComponent();
-        }
-
-        private void FormProductComponent_Load(object sender, EventArgs e)
-        {
-            try
-            {
-                var response = APICustomer.GetRequest("api/Component/GetList");
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    comboBox1.DisplayMember = "ComponentName";
-                    comboBox1.ValueMember = "Id";
-                    comboBox1.DataSource = APICustomer.GetElement<List<IngredientViewModel>>(response);
-                    comboBox1.SelectedItem = null;
-                }
-                else
-                {
-                    throw new Exception(APICustomer.GetError(response));
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            if (model != null)
-            {
-                comboBox1.Enabled = false;
-                comboBox1.SelectedValue = model.IngredientId;
-                FCINumber.Text = model.Count.ToString();
-            }
+            this.service = service;
         }
 
         private void FCISave_Click(object sender, EventArgs e)
@@ -93,9 +72,31 @@ namespace SweetShopView
             DialogResult = DialogResult.Cancel;
             Close();
         }
+
         private void FormCakeIngredient_Load(object sender, EventArgs e)
         {
+            try
+            {
+                List<IngredientViewModel> list = service.GetList();
+                if (list != null)
+                {
+                    comboBox1.DisplayMember = "IngredientName";
+                    comboBox1.ValueMember = "Id";
+                    comboBox1.DataSource = list;
+                    comboBox1.SelectedItem = null;
+                }
 
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            if (model != null)
+            {
+                comboBox1.Enabled = false;
+                comboBox1.SelectedValue = model.IngredientId;
+                FCINumber.Text = model.Count.ToString();
+            }
         }
     }
 }

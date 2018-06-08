@@ -2,25 +2,32 @@
 using SweetShopService.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using Unity;
 using Unity.Attributes;
 
-namespace SweetShopView
+namespace SweetShopWPF
 {
-    public partial class FormCustomer : Form
+    /// <summary>
+    /// Логика взаимодействия для FormCustomer.xaml
+    /// </summary>
+    public partial class FormCustomer : Window
     {
         [Dependency]
 
         public new IUnityContainer Container { get; set; }
 
-        public int Id { set { id = value; } }
+        public int Id { set { Id = value; } }
 
         private readonly ICustomerService service;
 
@@ -30,9 +37,10 @@ namespace SweetShopView
         {
             InitializeComponent();
             this.service = service;
+            Loaded += FormCustomer_Load;
         }
 
-        private void FormCustomer_Load(object sender, EventArgs e)
+        private void FormCustomer_Load(object sender, RoutedEventArgs e)
         {
             if (id.HasValue)
             {
@@ -46,16 +54,16 @@ namespace SweetShopView
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
 
-        private void FCusSave_Click(object sender, EventArgs e)
+        private void FCusSave_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(FCusFIO.Text))
             {
-                MessageBox.Show("Check FIO", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Check FIO", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             try
@@ -75,19 +83,19 @@ namespace SweetShopView
                         CustomerFIO = FCusFIO.Text
                     });
                 }
-                MessageBox.Show("Save: Successful", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                DialogResult = DialogResult.OK;
+                MessageBox.Show("Save: Successful", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                DialogResult = true;
                 Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void FCusCancel_Click(object sender, EventArgs e)
+        private void FCusCancel_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = DialogResult.Cancel;
+            DialogResult = false;
             Close();
         }
     }
