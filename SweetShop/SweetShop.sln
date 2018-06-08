@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SweetShopService", "SweetSh
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SweetShopView", "SweetShopView\SweetShopView.csproj", "{EE8D474C-6B2E-464A-9018-6DB633C42C54}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SweetShopWPF", "SweetShopWPF\SweetShopWPF.csproj", "{3B8826FB-F5A9-4B8B-8CC4-71492FEBFDF3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SweetShopRestApi", "SweetShopRestApi\SweetShopRestApi.csproj", "{490DB0DC-1D32-4DDB-A084-E190EDA16CF8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,15 +29,15 @@ Global
 		{EE8D474C-6B2E-464A-9018-6DB633C42C54}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EE8D474C-6B2E-464A-9018-6DB633C42C54}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EE8D474C-6B2E-464A-9018-6DB633C42C54}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3B8826FB-F5A9-4B8B-8CC4-71492FEBFDF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3B8826FB-F5A9-4B8B-8CC4-71492FEBFDF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3B8826FB-F5A9-4B8B-8CC4-71492FEBFDF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3B8826FB-F5A9-4B8B-8CC4-71492FEBFDF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{490DB0DC-1D32-4DDB-A084-E190EDA16CF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{490DB0DC-1D32-4DDB-A084-E190EDA16CF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{490DB0DC-1D32-4DDB-A084-E190EDA16CF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{490DB0DC-1D32-4DDB-A084-E190EDA16CF8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {7CC0A275-FD6B-41EB-8C7F-F7292D3A5438}
+		SolutionGuid = {83BE98B1-5FBD-46C9-83BA-550A44A8632D}
 	EndGlobalSection
 EndGlobal

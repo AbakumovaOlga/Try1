@@ -62,6 +62,7 @@
             this.FFrName.Name = "FFrName";
             this.FFrName.Size = new System.Drawing.Size(329, 26);
             this.FFrName.TabIndex = 9;
+            this.FFrName.TextChanged += new System.EventHandler(this.FFrName_TextChanged);
             // 
             // label1
             // 
