@@ -101,9 +101,5 @@ namespace SweetShopView
         {
             LoadData();
         }
-        private void FBakSList_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-
-        }
     }
 }

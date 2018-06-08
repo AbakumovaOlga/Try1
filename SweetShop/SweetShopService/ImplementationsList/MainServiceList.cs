@@ -80,7 +80,7 @@ namespace SweetShopService.ImplementationsList
             element.Status = RequestStatus.Оплачен;
         }
 
-        public void PutIngredientOnFridge(FridgeIngredientBindingModel model)
+        public void ReplenishFridge(FridgeIngredientBindingModel model)
         {
             FridgeIngredient element = source.FridgeIngredients
                                                 .FirstOrDefault(rec => rec.FridgeId == model.FridgeId &&

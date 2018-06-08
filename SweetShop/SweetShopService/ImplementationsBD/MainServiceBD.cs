@@ -143,7 +143,7 @@ namespace SweetShopService.ImplementationsBD
             context.SaveChanges();
         }
 
-        public void PutIngredientOnFridge(FridgeIngredientBindingModel model)
+        public void ReplenishFridge(FridgeIngredientBindingModel model)
         {
             FridgeIngredient element = context.FridgeIngredients
                                                 .FirstOrDefault(rec => rec.FridgeId == model.FridgeId &&

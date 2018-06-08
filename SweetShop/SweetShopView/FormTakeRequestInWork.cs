@@ -65,7 +65,7 @@ namespace SweetShopView
             }
             try
             {
-                var response = APICustomer.PostRequest("api/Main/TakeOrderInWork", new RequestBindingModel
+                var response = APICustomer.PostRequest("api/Main/TakeRequestInWork", new RequestBindingModel
                 {
                     Id = id.Value,
                     BakerId = Convert.ToInt32(FTRBaker.SelectedValue)

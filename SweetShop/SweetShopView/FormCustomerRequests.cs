@@ -20,10 +20,6 @@ namespace SweetShopView
         {
             InitializeComponent();
         }
-        private void FormCustomerRequests_Load(object sender, EventArgs e)
-        {
-
-        }
         private void buttonForm_Click(object sender, EventArgs e)
         {
             if (dateTimePickerFrom.Value.Date >= dateTimePickerTo.Value.Date)

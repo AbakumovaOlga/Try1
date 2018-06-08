@@ -147,9 +147,5 @@ namespace SweetShopView
             DialogResult = DialogResult.Cancel;
             Close();
         }
-        private void FCRNumber_TextChanged_1(object sender, EventArgs e)
-        {
-
-        }
     }
 }

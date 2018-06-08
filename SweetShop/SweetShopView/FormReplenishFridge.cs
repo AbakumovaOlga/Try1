@@ -23,13 +23,13 @@ namespace SweetShopView
         {
             try
             {
-                var responseC = APICustomer.GetRequest("api/Component/GetList");
+                var responseC = APICustomer.GetRequest("api/Ingredient/GetList");
                 if (responseC.Result.IsSuccessStatusCode)
                 {
                     List<IngredientViewModel> list = APICustomer.GetElement<List<IngredientViewModel>>(responseC);
                     if (list != null)
                     {
-                        FRFIngredient.DisplayMember = "ComponentName";
+                        FRFIngredient.DisplayMember = "IngredientName";
                         FRFIngredient.ValueMember = "Id";
                         FRFIngredient.DataSource = list;
                         FRFIngredient.SelectedItem = null;
@@ -39,13 +39,13 @@ namespace SweetShopView
                 {
                     throw new Exception(APICustomer.GetError(responseC));
                 }
-                var responseS = APICustomer.GetRequest("api/Stock/GetList");
+                var responseS = APICustomer.GetRequest("api/Fridge/GetList");
                 if (responseS.Result.IsSuccessStatusCode)
                 {
                     List<FridgeViewModel> list = APICustomer.GetElement<List<FridgeViewModel>>(responseS);
                     if (list != null)
                     {
-                        FRFFridge.DisplayMember = "StockName";
+                        FRFFridge.DisplayMember = "FridgeName";
                         FRFFridge.ValueMember = "Id";
                         FRFFridge.DataSource = list;
                         FRFFridge.SelectedItem = null;
@@ -81,7 +81,7 @@ namespace SweetShopView
             }
             try
             {
-                var response = APICustomer.PostRequest("api/Main/PutComponentOnStock", new FridgeIngredientBindingModel
+                var response = APICustomer.PostRequest("api/Main/ReplenishFridge", new FridgeIngredientBindingModel
                 {
                     IngredientId = Convert.ToInt32(FRFIngredient.SelectedValue),
                     FridgeId = Convert.ToInt32(FRFFridge.SelectedValue),

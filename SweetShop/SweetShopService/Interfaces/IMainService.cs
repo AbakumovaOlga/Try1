@@ -20,6 +20,6 @@ namespace SweetShopService.Interfaces
 
         void PayRequest(int id);
 
-        void PutIngredientOnFridge(FridgeIngredientBindingModel model);
+        void ReplenishFridge(FridgeIngredientBindingModel model);
     }
 }

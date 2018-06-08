@@ -138,7 +138,7 @@ namespace SweetShopView
                 int id = Convert.ToInt32(FMList.SelectedRows[0].Cells[0].Value);
                 try
                 {
-                    var response = APICustomer.PostRequest("api/Main/.PayRequest", new RequestBindingModel
+                    var response = APICustomer.PostRequest("api/Main/PayRequest", new RequestBindingModel
                     {
                         Id = id
                     });
@@ -204,13 +204,9 @@ namespace SweetShopView
             var form = new FormCustomerRequests();
             form.ShowDialog();
         }
-        private void FMList_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-
-        }
         private void FormMain_Load(object sender, EventArgs e)
         {
-
+            LoadData();
         }
     }
 }

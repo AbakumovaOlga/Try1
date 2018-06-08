@@ -156,7 +156,6 @@
             this.FMList.RowTemplate.Height = 28;
             this.FMList.Size = new System.Drawing.Size(993, 679);
             this.FMList.TabIndex = 1;
-            this.FMList.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.FMList_CellContentClick);
             // 
             // FMCreate
             // 

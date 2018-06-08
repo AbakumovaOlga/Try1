@@ -96,9 +96,5 @@ namespace SweetShopView
             DialogResult = DialogResult.Cancel;
             Close();
         }
-        private void FBakFIO_TextChanged(object sender, EventArgs e)
-        {
-
-        }
     }
 }

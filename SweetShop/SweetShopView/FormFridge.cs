@@ -101,10 +101,5 @@ namespace SweetShopView
             DialogResult = DialogResult.Cancel;
             Close();
         }
-
-        private void FFrName_TextChanged(object sender, EventArgs e)
-        {
-
-        }
     }
 }
